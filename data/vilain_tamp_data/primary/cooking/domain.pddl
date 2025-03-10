@@ -1,6 +1,6 @@
 ;Header and description
 
-(define (domain cooking_dual_arm)
+(define (domain cooking)
 
     ;remove requirements that are not needed
     (:requirements :strips :equality)

@@ -1,4 +1,4 @@
-(define (problem slicing)
+(define (problem cooking)
     (:domain cooking)
     (:objects
         a_bot b_bot - Robot

@@ -1,8 +1,8 @@
-(define (problem slicing)
+(define (problem cooking)
     (:domain cooking)
     (:objects
         a_bot b_bot - Robot
-        carrot cucumber - PhysicalObject
+        cucumber potato carrot - PhysicalObject
         knife - Tool
         cutting_board bowl tray plate knife_holder - Location
     )
@@ -10,8 +10,9 @@
     (:init
         (Robot b_bot)
         (Robot a_bot)
-        (PhysicalObject carrot)
         (PhysicalObject cucumber)
+        (PhysicalObject potato)
+        (PhysicalObject carrot)
         (Tool knife)
 
         (HandEmpty a_bot)
@@ -23,19 +24,23 @@
         (Location other_plate)
         (ToolHolder knife_holder)
         (isWorkspace cutting_board)
-        (CanNotReach b_bot carrot)
         (CanNotReach b_bot cucumber)
+        (CanNotReach b_bot potato)
+        (CanNotReach b_bot carrot)
         (At knife knife_holder)
-        (At carrot tray)
         (At cucumber tray)
+        (At potato tray)
+        (At carrot tray)
     )
 
     (:goal
         (and
-            (Served carrot bowl)
             (Served cucumber bowl)
-            (isSliced carrot)
+            (Served potato bowl)
+            (Served carrot bowl)
             (isSliced cucumber)
+            (isSliced potato)
+            (isSliced carrot)
         )
     )
 )

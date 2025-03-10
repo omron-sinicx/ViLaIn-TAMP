@@ -28,7 +28,6 @@
 
         (At knife knife_holder)
         (At cucumber tray)
-        (At tomato cutting_board)
     )
 
     (:goal
