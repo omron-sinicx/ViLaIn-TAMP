@@ -35,7 +35,6 @@
         (At ?obj ?loc) ; Is the object at a specific location (e.g., tray, cutting_board)
 
         (Served ?obj ?loc) ; Is the object served at a location?
-        (Reoriented ?obj ?loc) ; Has the object pose been reoriented to the correct pose?
     )
 
     ; SCAN: Look for objects in the tray
@@ -90,24 +89,6 @@
             (HandEmpty ?robot)
             (not (Registered ?robot ?obj))
         )
-    )
-
-    ; REORIENT: Reorient the position of an object using pick-and-place
-    (:action reorient
-        :parameters (?robot ?obj ?loc)
-        :precondition (and
-            (Robot ?robot)
-            (PhysicalObject ?obj)
-            (Registered ?robot ?obj)
-            (Location ?loc)
-            (HandEmpty ?robot)
-            (not (Grasping ?robot ?obj))
-            (not (CanNotReach ?robot ?obj))
-            (not (Reoriented ?obj ?loc))
-            (At ?obj ?loc)
-        )
-        :effect (and
-            (Reoriented ?obj ?loc))
     )
 
     ; EQUIP_TOOL: Pick up a tool

@@ -4,7 +4,7 @@
         a_bot b_bot - Robot
         potato carrot - PhysicalObject
         knife - Tool
-        cutting_board tray plate knife_holder other_plate - Location
+        cutting_board tray plate knife_holder - Location
     )
 
     (:init
@@ -20,7 +20,6 @@
         (Location tray)
         (Location plate)
         (Location knife_holder)
-        (Location other_plate)
 
         (ToolHolder knife_holder)
 

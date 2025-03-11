@@ -19,8 +19,8 @@
         (Location cutting_board)
         (Location tray)
         (Location plate)
+        (Location plate2)
         (Location knife_holder)
-        (Location other_plate)
 
         (ToolHolder knife_holder)
 

@@ -16,15 +16,20 @@
 
         (HandEmpty a_bot)
         (HandEmpty b_bot)
+
         (Location cutting_board)
         (Location tray)
         (Location plate)
         (Location knife_holder)
-        (Location other_plate)
+
         (ToolHolder knife_holder)
+
         (isWorkspace cutting_board)
+
+        (CanNotReach a_bot knife)
         (CanNotReach b_bot carrot)
         (CanNotReach b_bot potato)
+
         (At knife knife_holder)
         (At potato tray)
         (At carrot tray)

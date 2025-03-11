@@ -20,7 +20,6 @@
         (Location tray)
         (Location plate)
         (Location knife_holder)
-        (Location other_plate)
 
         (ToolHolder knife_holder)
 
