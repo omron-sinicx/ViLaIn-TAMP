@@ -17,8 +17,8 @@
         (HandEmpty b_bot)
 
         (Location cutting_board)
-        (Location bowl)
         (Location tray)
+        (Location bowl)
         (Location plate)
         (Location knife_holder)
 

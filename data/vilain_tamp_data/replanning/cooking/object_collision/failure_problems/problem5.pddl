@@ -9,11 +9,13 @@
 
     (:init
         (Robot a_bot)
+        (Robot b_bot)
         (PhysicalObject carrot)
         (PhysicalObject cucumber)
         (Tool knife)
 
         (HandEmpty a_bot)
+        (HandEmpty b_bot)
 
         (Location cutting_board)
         (Location tray)
