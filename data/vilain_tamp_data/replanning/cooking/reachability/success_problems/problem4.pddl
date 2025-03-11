@@ -4,7 +4,7 @@
         a_bot b_bot - Robot
         carrot - PhysicalObject
         knife - Tool
-        cutting_board tray plate knife_holder - Location
+        cutting_board bowl tray plate knife_holder - Location
     )
 
     (:init
@@ -18,6 +18,7 @@
 
         (Location cutting_board)
         (Location tray)
+        (Location bowl)
         (Location plate)
         (Location knife_holder)
 
@@ -35,6 +36,7 @@
     (:goal
         (and
             (isSliced carrot)
+            (Served carrot bowl)
         )
     )
 )

@@ -4,7 +4,7 @@
         a_bot b_bot - Robot
         cucumber - PhysicalObject
         knife - Tool
-        cutting_board tray plate knife_holder - Location
+        cutting_board bowl tray plate knife_holder - Location
     )
 
     (:init
@@ -17,6 +17,7 @@
         (HandEmpty b_bot)
 
         (Location cutting_board)
+        (Location bowl)
         (Location tray)
         (Location plate)
         (Location knife_holder)
@@ -32,6 +33,7 @@
     (:goal
         (and
             (isSliced cucumber)
+            (Served cucumber bowl)
         )
     )
 )

@@ -4,7 +4,7 @@
         a_bot b_bot - Robot
         cucumber - PhysicalObject
         knife - Tool
-        cutting_board bowl tray plate knife_holder - Location
+        cutting_board tray plate knife_holder - Location
     )
 
     (:init
