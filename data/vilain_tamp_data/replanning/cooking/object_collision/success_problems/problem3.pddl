@@ -2,7 +2,7 @@
     (:domain cooking)
     (:objects
         a_bot b_bot - Robot
-        cucumber potato - PhysicalObject
+        cucumber apple - PhysicalObject
         knife - Tool
         cutting_board tray plate plate2 knife_holder - Location
     )
@@ -10,7 +10,7 @@
     (:init
         (Robot a_bot)
         (PhysicalObject cucumber)
-        (PhysicalObject potato)
+        (PhysicalObject apple)
         (Tool knife)
 
         (HandEmpty a_bot)
@@ -29,13 +29,13 @@
 
         (At knife knife_holder)
         (At cucumber plate)
-        (At potato plate2)
+        (At apple plate2)
     )
 
     (:goal
         (and
             (At cucumber plate2)
-            (not (At potato plate2))
+            (not (At apple plate2))
         )
     )
 )

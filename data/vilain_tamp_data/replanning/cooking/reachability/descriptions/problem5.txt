@@ -1,1 +1,1 @@
-The robot is required to move the 'potato' from the 'tray' to the 'cutting board', but the robot does not recognize that the robot cannot reach the 'potato'.
+The robot is required to move the 'apple' from the 'tray' to the 'cutting board', but the robot does not recognize that the robot cannot reach the 'apple'.
