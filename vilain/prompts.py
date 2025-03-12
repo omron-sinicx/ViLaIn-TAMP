@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from vilain_utils import PDDLDomain
-from vilain_utils import convert_predicates, convert_actions, convert_bboxes
+from vilain.vilain_utils import PDDLDomain
+from vilain.vilain_utils import convert_predicates, convert_actions, convert_bboxes
 
 
 def create_prompt_for_initial_state(
