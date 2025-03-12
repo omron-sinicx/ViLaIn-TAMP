@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import json
 import base64
 from PIL import Image
@@ -360,6 +361,5 @@ The failure occurred due to  eef in collision: b_bot_left_inner_finger - potato.
     print("prompt:\n", result["prompt"])
     print("The revised PD (2nd):\n", result["result"])
     print()
-
 
 

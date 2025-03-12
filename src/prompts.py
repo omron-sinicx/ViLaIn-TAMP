@@ -5,10 +5,10 @@ from vilain_utils import convert_predicates, convert_actions, convert_bboxes
 
 
 def create_prompt_for_initial_state(
-    pddl_domain_str: str,
-    pddl_problem_obj_str: str,
-    bboxes: list[tuple[str, list[float]]],
-    examples: list[dict[str, str]]=[],
+    pddl_domain_str: str, # PDDL domain
+    pddl_problem_obj_str: str, # PDDL objects
+    bboxes: list[tuple[str, list[float]]], # a liist of tuples of an object name and coordinates
+    examples: list[dict[str, str]]=[], # in-context examples
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 
@@ -49,11 +49,11 @@ Could you write a set of predicates of the initial state for the given objects a
 
 
 def create_prompt_for_goal_conditions(
-    pddl_domain_str: str,
-    pddl_problem_obj_str: str,
-    pddl_problem_init_str: str,
-    instruction: str,
-    examples: list[dict[str, str]]=[],
+    pddl_domain_str: str, # PDDL domain
+    pddl_problem_obj_str: str, # PDDL objects
+    pddl_problem_init_str: str, # PDDL initial state
+    instruction: str, # a linguistic instruction
+    examples: list[dict[str, str]]=[], # in-context examples
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 
@@ -100,12 +100,12 @@ Could you write a set of predicates of the goal conditions for the given instruc
 
 
 def create_prompt_for_revision(
-    pddl_domain_str: str,
-    pddl_problem_str: str,
-    instruction: str,
-    feedback: str,
-    prev_feedbacks,
-    prev_revisions,
+    pddl_domain_str: str, # PDDL domain
+    pddl_problem_str: str, # PDDL problem
+    instruction: str, # a linguistic instruction
+    feedback: str, # motion planning feedback for errors
+    prev_feedbacks, # a list of previously obtained motion planning feedbacks
+    prev_revisions, # a list of previsouly revised PDs
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 

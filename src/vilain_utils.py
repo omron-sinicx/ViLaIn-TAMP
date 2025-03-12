@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from typing import Tuple, List, Dict
 import os
 import re
 import itertools
@@ -10,7 +9,7 @@ from collections import defaultdict
 class PDDLProblem:
     def __init__(
         self, 
-        pddl_problem: str,
+        pddl_problem: str, # PDDL problem by open(pddl_problem_path).read()
     ):
         self.pddl_problem = pddl_problem
 
@@ -70,7 +69,7 @@ class PDDLProblem:
 class PDDLDomain:
     def __init__(
         self, 
-        pddl_domain: str,
+        pddl_domain: str, # PDDL domain by open(pddl_domain_path).read()
     ):
         self.pddl_domain = pddl_domain
         self.pddl_domain_flat = re.sub(
@@ -226,7 +225,7 @@ class PDDLDomain:
             self.name2action[action["name"]] = action
 
 
-def convert_bboxes(bboxes: List[Tuple[str, List[float]]]):
+def convert_bboxes(bboxes: list[tuple[str, list[float]]]):
     """Convert json bounding boxes into string.
     Assume that a bounding box is a tuple of an object name and coordinates.
     E.g., ('apple', [x, y, w, h])
@@ -238,7 +237,7 @@ def convert_bboxes(bboxes: List[Tuple[str, List[float]]]):
     ])
 
 
-def convert_predicates(pddl_domain):
+def convert_predicates(pddl_domain: PDDLDomain):
     """Convert predicates and explanations into string."""
 
     return "\n".join([
@@ -247,7 +246,7 @@ def convert_predicates(pddl_domain):
     ])
 
 
-def convert_actions(pddl_domain):
+def convert_actions(pddl_domain: PDDLDomain):
     """Convert PDDL actions into string."""
 
     return "\n".join(pddl_domain.pddl_actions)
