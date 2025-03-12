@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vilain"
+version = "0.0.1"
+description = "ViLaIn"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {file = "LICENSE"}
+dependencies = [
+    "openai",
+    "Pillow",
+    "tqdm",
+]
+
+[tool.setuptools]
+packages = ["vilain"] 
