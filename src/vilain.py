@@ -2,11 +2,13 @@
 
 import json
 import base64
+from io import BytesIO
 from PIL import Image
 from openai import OpenAI
 
 from vilain_utils import PDDLProblem, PDDLDomain
-from vilain_utils import extract_pddl
+from vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments
+from prompts import create_prompt_for_object_detection
 from prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
 from prompts import create_prompt_for_revision
 
@@ -15,9 +17,17 @@ class ViLaIn:
     def __init__(
         self,
         model: str, # gpt-4o, o1, o3-mini
+        detection_args: dict[str, str]=None, # OpenAI API arguments for object detection
+        detection_model: str=None, # detection mdoel (e.g., "Qwen/Qwen2.5-VL-7B-Instruct")
     ):
-        self.client = OpenAI()
         self.model = model
+        self.detection_args = detection_args
+        self.detection_model = detection_model
+
+        self.client = OpenAI()
+
+        if detection_args and detection_model:
+            self.client_for_detection = OpenAI(**detection_args)
 
     def generate(
         self,
@@ -39,19 +49,87 @@ class ViLaIn:
     
     def detect_objects(
         self,
-        image_path: str,
+        image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
+        fixed_bboxes: list[tuple[str, list[float]]], # object labels and their bounding boxes in [0, 1] for fixed objects
+        domain: str="cooking", # domain 
+        size: tuple[int]=(640, 640), # resize image to (width, height)
     ):
-        pass #TODO
+        if not self.client_for_detection:
+            return {
+                "result": "To perform object detection, please specify detection_args and " + \
+                          "detection_model when instantiating ViLaIn.",
+                "prompt": "",
+            }
+
+        try:
+            # resize image
+            resized_pil_image = Image.open(BytesIO(base64.b64decode(image))).convert("RGB").resize(size)
+            buffer = BytesIO()
+            resized_pil_image.save(buffer, "png")
+            resized_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+            # get a prompt
+            prompt = create_prompt_for_object_detection(domain)
+
+            # generate bounding boxes with parameters
+            # The params were recommended at https://qwen.readthedocs.io/en/latest/deployment/vllm.html 
+            # (accessed on March 14, 2025)
+            completion = self.client_for_detection.chat.completions.create(
+                model=self.detection_model,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{resized_image}"},
+                        },
+                    ],
+                }],
+                temperature=0.7,
+                top_p=0.8,
+                max_tokens=2048,
+                extra_body={
+                    "repetition_penalty": 1.05,
+                },
+            )
+
+            # extract the output in json format
+            output = completion.choices[0].message.content
+            bboxes = process_bboxes(
+                output, 
+                fixed_bboxes,
+                size,
+            )
+
+            result = create_pddl_objects(bboxes, domain)
+
+        except Exception as e:
+            result = f"The generation failed due to the following error:\n{e}"
+            prompt = "N/A"
+
+        return {
+            "result": result,
+            "prompt": prompt,
+            "bboxes": bboxes,
+        }
 
     def generate_initial_state(
         self,
         pddl_domain_str: str, # PDDL domain
         pddl_problem_obj_str: str, # PDDL objects
         bboxes: list[tuple[str, list[float]]], # a liist of tuples of an object name and coordinates
-        image_path: str, # an image path
+        image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
         examples: list=[], # in-context examples
+        without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
         try:
+            if without_comments:
+                pddl_domain_str = remove_comments(pddl_domain_str)
+
             prompt = create_prompt_for_initial_state(
                 pddl_domain_str,
                 pddl_problem_obj_str,
@@ -64,12 +142,10 @@ class ViLaIn:
                 "text": prompt,
             }]
 
-            if image_path is not None:
-                base64_image = base64.b64encode(open(image_path, "rb").read()).decode("utf-8")
-
+            if image is not None:
                 content += [{
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
                 }]
 
             output = self.generate(content)
@@ -90,8 +166,12 @@ class ViLaIn:
         pddl_problem_init_str: str, # PDDL initial state
         instruction: str, # a linguistic instruction
         examples: list=[], # in-context examples
+        without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
         try:
+            if without_comments:
+                pddl_domain_str = remove_comments(pddl_domain_str)
+
             prompt = create_prompt_for_goal_conditions(
                 pddl_domain_str,
                 pddl_problem_obj_str,
@@ -121,12 +201,16 @@ class ViLaIn:
         pddl_domain_str: str, # PDDL domain
         pddl_problem_str: str, # an initially generated PDDL problem
         instruction: str, # a linguistic instruction
-        image_path: str, # an image path
+        image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
         feedback: str, # motion planning feedback
         prev_feedbacks: list[str], # a list of previously provided feedbacks
         prev_revisions: list[str], # a list of previously revised PDDL problems
+        without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
         try:
+            if without_comments:
+                pddl_domain_str = remove_comments(pddl_domain_str)
+
             prompt = create_prompt_for_revision(
                 pddl_domain_str,
                 pddl_problem_str,
@@ -141,12 +225,10 @@ class ViLaIn:
                 "text": prompt,
             }]
 
-            if image_path is not None:
-                base64_image = base64.b64encode(open(image_path, "rb").read()).decode("utf-8")
-
+            if image is not None:
                 content += [{
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
                 }]
 
             output = self.generate(content)
@@ -203,8 +285,8 @@ if __name__ == "__main__":
     ]
 
     # image (scene observation) paths
-    image_paths = [
-        f"{data_dir}/observations/problem{i}.jpg"
+    images = [
+        base64.b64encode(open(f"{data_dir}/observations/problem{i}.jpg", "rb").read()).decode("utf-8")
         for i in range(1, 10+1)
     ]
 
@@ -220,14 +302,47 @@ if __name__ == "__main__":
     # create a model 
     model="gpt-4o-2024-11-20"
     #model="o1-2024-12-17"
-    vilain = ViLaIn(model)
+    detection_model = "Qwen/Qwen2.5-VL-7B-Instruct"
+    detection_args = {
+        "base_url": "http://localhost:33333/v1",
+        "api_key": "qwen-2-5-vl-7b-instruct",
+    }
+
+    vilain = ViLaIn(model, detection_args, detection_model)
+
+    # test object detection
+    import copy 
+    fixed_bboxes = copy.deepcopy(all_bboxes[-1])
+    obj_len = len(fixed_bboxes)
+
+    for i in reversed(range(obj_len)):
+        obj = fixed_bboxes[i][0]
+
+        if obj in ("cucumber", "carrot", "tomato", "cutting_board", "bowl"):
+            del fixed_bboxes[i]
+        else:
+            bbox = fixed_bboxes[i][1]
+            fixed_bboxes[i] = (obj, [ b / 512 for b in bbox ])
 
 #    # test initial state generation
+    result = vilain.detect_objects(
+        images[-1],
+        fixed_bboxes,
+        "cooking",
+        (640, 640),
+    )
+
+    print("-" * 30)
+    print("### prompt:\n", result["prompt"])
+    print("### bboxes:\n", result["bboxes"])
+    print("### The generated objects:\n", result["result"])
+    print()
+
 #    result = vilain.generate_initial_state(
 #        pddl_domain_str,
 #        pddl_problem_obj_strs[0],
 #        all_bboxes[0],
-#        image_paths[0],
+#        images[0],
 #    )
 #
 #    print("-" * 30)
@@ -240,7 +355,7 @@ if __name__ == "__main__":
 #        pddl_domain_str,
 #        pddl_problem_obj_strs[0],
 #        all_bboxes[0],
-#        image_paths[0],
+#        images[0],
 #        [{
 #            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
 #            "bboxes": all_bboxes[1],
@@ -285,81 +400,81 @@ if __name__ == "__main__":
 #    print("The generated goal conditions with example:\n", result["result"])
 #    print()
 
-    # feedback for PD revision 
-    mtc_comments = """
-Summary of stages with complete failures:
-place_2 (Place)
-  -> UnGrasp (SimpleUnGrasp)
-    -> compute ik (ComputeIK)
-      # of failures: 8
-      Failure comments:
-        1:  eef in collision: b_bot_left_inner_finger - potato
-        2:  eef in collision: b_bot_left_inner_finger - potato
-        3:  eef in collision: b_bot_left_inner_finger - potato
-        4:  eef in collision: b_bot_left_inner_finger - potato
-        5:  eef in collision: b_bot_left_inner_finger - potato
-        6:  eef in collision: b_bot_left_inner_finger - potato
-        7:  eef in collision: b_bot_left_inner_finger - potato
-        8:  eef in collision: b_bot_left_inner_finger - potato
-""".strip()
-
-    mtc_trace = """
- 1) scan b_bot cucumber tray
- 2) pick b_bot cucumber tray
- 3) place b_bot cucumber cutting_board [FAILURE]
- """.strip()
-
-    synthesized_message = """
-No feasible motion plan was found when planning for the place_2 action.
-The failure occurred due to  eef in collision: b_bot_left_inner_finger - potato.
-""".strip()
-
-    # inputs for PD revision
-    data_rev_dir = "./data/vilain_tamp_data/replanning/cooking"
-    pddl_domain_rev_str = open(f"{data_rev_dir}/domain.pddl").read()
-    pddl_problem_rev_str = open(f"{data_rev_dir}/object_collision/failure_problems/problem1.pddl").read()
-    instruction_rev = open(f"{data_rev_dir}/object_collision/instructions/problem1.txt").read()
-    image_path_rev = None # do not use this time
-
-    feedback = mtc_comments # use MTC comments as feedback
-
-    # the first revision 
-    prev_feedbacks = []
-    prev_revisions = []
-
-    # test PD revision with MTC feedbacks (object collision case, 1st time)
-    result = vilain.revise_problem_description(
-        pddl_domain_rev_str,
-        pddl_problem_rev_str,
-        instruction_rev,
-        image_path_rev,
-        feedback,
-        prev_feedbacks,
-        prev_revisions,
-    )
-
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The revised PD (1st):\n", result["result"])
-    print()
-
-    # test PD revision with MTC feedbacks (object collision case, 2nd time)
-    prev_feedbacks += [feedback]
-    prev_revisions += [result["result"]]
-
-    result = vilain.revise_problem_description(
-        pddl_domain_rev_str,
-        pddl_problem_rev_str,
-        instruction_rev,
-        image_path_rev,
-        feedback,
-        prev_feedbacks,
-        prev_revisions,
-    )
-
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The revised PD (2nd):\n", result["result"])
-    print()
+#    # feedback for PD revision 
+#    mtc_comments = """
+#Summary of stages with complete failures:
+#place_2 (Place)
+#  -> UnGrasp (SimpleUnGrasp)
+#    -> compute ik (ComputeIK)
+#      # of failures: 8
+#      Failure comments:
+#        1:  eef in collision: b_bot_left_inner_finger - potato
+#        2:  eef in collision: b_bot_left_inner_finger - potato
+#        3:  eef in collision: b_bot_left_inner_finger - potato
+#        4:  eef in collision: b_bot_left_inner_finger - potato
+#        5:  eef in collision: b_bot_left_inner_finger - potato
+#        6:  eef in collision: b_bot_left_inner_finger - potato
+#        7:  eef in collision: b_bot_left_inner_finger - potato
+#        8:  eef in collision: b_bot_left_inner_finger - potato
+#""".strip()
+#
+#    mtc_trace = """
+# 1) scan b_bot cucumber tray
+# 2) pick b_bot cucumber tray
+# 3) place b_bot cucumber cutting_board [FAILURE]
+# """.strip()
+#
+#    synthesized_message = """
+#No feasible motion plan was found when planning for the place_2 action.
+#The failure occurred due to  eef in collision: b_bot_left_inner_finger - potato.
+#""".strip()
+#
+#    # inputs for PD revision
+#    data_rev_dir = "./data/vilain_tamp_data/replanning/cooking"
+#    pddl_domain_rev_str = open(f"{data_rev_dir}/domain.pddl").read()
+#    pddl_problem_rev_str = open(f"{data_rev_dir}/object_collision/failure_problems/problem1.pddl").read()
+#    instruction_rev = open(f"{data_rev_dir}/object_collision/instructions/problem1.txt").read()
+#    image = None # do not use this time
+#
+#    feedback = mtc_comments # use MTC comments as feedback
+#
+#    # the first revision 
+#    prev_feedbacks = []
+#    prev_revisions = []
+#
+#    # test PD revision with MTC feedbacks (object collision case, 1st time)
+#    result = vilain.revise_problem_description(
+#        pddl_domain_rev_str,
+#        pddl_problem_rev_str,
+#        instruction_rev,
+#        image,
+#        feedback,
+#        prev_feedbacks,
+#        prev_revisions,
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", result["prompt"])
+#    print("The revised PD (1st):\n", result["result"])
+#    print()
+#
+#    # test PD revision with MTC feedbacks (object collision case, 2nd time)
+#    prev_feedbacks += [feedback]
+#    prev_revisions += [result["result"]]
+#
+#    result = vilain.revise_problem_description(
+#        pddl_domain_rev_str,
+#        pddl_problem_rev_str,
+#        instruction_rev,
+#        image,
+#        feedback,
+#        prev_feedbacks,
+#        prev_revisions,
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", result["prompt"])
+#    print("The revised PD (2nd):\n", result["result"])
+#    print()
 
 

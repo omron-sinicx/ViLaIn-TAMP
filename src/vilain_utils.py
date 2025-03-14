@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 import itertools
 from collections import defaultdict
 
@@ -252,6 +253,24 @@ def convert_actions(pddl_domain: PDDLDomain):
     return "\n".join(pddl_domain.pddl_actions)
 
 
+def extract_json(output: str):
+    start = output.index("{")
+    end = None
+    stack = 0
+
+    for i in range(start, len(output)):
+        if output[i] == "{":
+            stack += 1
+        if output[i] == "}":
+            stack -= 1
+
+        if stack <= 0:
+            end = i
+            break
+
+    return output[start: end+1]
+
+
 def extract_pddl(
     output_raw: str,
     part: str, # init or goal or whole
@@ -293,5 +312,127 @@ def extract_pddl(
             break
 
     return output_raw[start_idx:end_idx + 1] if end_idx != -1 else ""
+
+
+def rescale_bboxes(
+    bboxes: list[tuple[str, list[float]]],
+    size: tuple[int], # (width, height)
+):
+    # sanity check
+    val_min = min([ min(bbox) for _, bbox in bboxes ])
+    val_max = max([ max(bbox) for _, bbox in bboxes ])
+
+    if val_min < 0 or val_max > 1:
+        print("(val_min, val_max) = ", (val_min, val_max))
+        raise RuntimeError("Bounding box coordinates should be in [0, 1].")
+
+    # rescale values 
+    new_bboxes = []
+    width, height = size
+
+    for label, bbox in bboxes:
+        new_bbox = [
+            bbox[0] * width,
+            bbox[1] * height,
+            bbox[2] * width,
+            bbox[3] * height,
+        ]
+
+        new_bboxes += [(label, new_bbox)]
+
+    return new_bboxes
+
+
+def process_bboxes(
+    output: str,
+    fixed_bboxes: list[tuple[str, list[float]]],
+    size: tuple[int],
+):
+    """Extract bboxes in json from the output and post-process the generated bounding boxes"""
+
+    # get generated bboxes
+    output_json = json.loads(extract_json(output))
+
+    keys = list(output_json.keys())
+    bboxes = []
+
+    for key in keys:
+        if output_json[key] is None or len(output_json[key]) != 4:
+            del output_json[key]
+        else:
+            bboxes += [(key, output_json[key])]
+
+    # rescale bounding boxes for fixed objects
+    fixed_bboxes = rescale_bboxes(
+        fixed_bboxes, 
+        size,
+    )
+
+    # merge two bboxes
+    bboxes = fixed_bboxes + bboxes
+
+    return bboxes
+
+
+def associate_types(
+    objects: list[str],
+    domain: str="cooking",
+):
+    objects_with_types = []
+
+    if domain == "cooking":
+        robots = ("a_bot", "b_bot")
+        vegetables = ("cucumber", "carrot", "apple")
+        tools = ("knife", )
+        locations = ("plate", "bowl", "tray", "knife_holder", "cutting_board")
+
+        for obj in objects:
+            if obj in robots:
+                objects_with_types += [(obj, "Robot")]
+
+            elif any(obj.startswith(v) for v in vegetables):
+                objects_with_types += [(obj, "PhysicalObject")]
+
+            elif any(obj.startswith(t) for t in tools):
+                objects_with_types += [(obj, "Tool")]
+
+            elif any(obj.startswith(l) for l in locations):
+                objects_with_types += [(obj, "Location")]
+
+    return objects_with_types
+
+
+def create_pddl_objects(
+    bboxes: list[tuple[str, list[float]]],
+    domain: str="cooking",
+):
+    objects = [ x[0] for x in bboxes ]
+
+    objects_with_types = associate_types(
+        objects, 
+        domain,
+    )
+
+    type2objects = defaultdict(list)
+
+    for obj, _type in objects_with_types:
+        type2objects[_type] += [obj]
+
+    objs_type_strs = "\n".join([
+        "    " + " ".join(objs) + " - " + _type
+        for _type, objs in type2objects.items()
+    ])
+
+    pddl = f"(:objects\n{objs_type_strs}\n)" 
+
+    return pddl
+
+
+def remove_comments(pddl: str):
+    """Remove comments in PDDL Problem or Domain."""
+    pattern = re.compile(r"(;.*?$)", re.MULTILINE)
+    new_pddl = pattern.sub("", pddl)
+
+    return new_pddl
 
 
