@@ -5,6 +5,7 @@ import re
 import json
 import itertools
 from collections import defaultdict
+from typing import List, Tuple, Dict
 
 
 class PDDLProblem:
@@ -226,7 +227,7 @@ class PDDLDomain:
             self.name2action[action["name"]] = action
 
 
-def convert_bboxes(bboxes: list[tuple[str, list[float]]]):
+def convert_bboxes(bboxes: List[Tuple[str, List[float]]]):
     """Convert json bounding boxes into string.
     Assume that a bounding box is a tuple of an object name and coordinates.
     E.g., ('apple', [x, y, w, h])
@@ -315,8 +316,8 @@ def extract_pddl(
 
 
 def rescale_bboxes(
-    bboxes: list[tuple[str, list[float]]],
-    size: tuple[int], # (width, height)
+    bboxes: List[Tuple[str, List[float]]],
+    size: Tuple[int], # (width, height)
 ):
     # sanity check
     val_min = min([ min(bbox) for _, bbox in bboxes ])
@@ -345,8 +346,8 @@ def rescale_bboxes(
 
 def process_bboxes(
     output: str,
-    fixed_bboxes: list[tuple[str, list[float]]],
-    size: tuple[int],
+    fixed_bboxes: List[Tuple[str, List[float]]],
+    size: Tuple[int],
 ):
     """Extract bboxes in json from the output and post-process the generated bounding boxes"""
 
@@ -375,7 +376,7 @@ def process_bboxes(
 
 
 def associate_types(
-    objects: list[str],
+    objects: List[str],
     domain: str="cooking",
 ):
     objects_with_types = []
@@ -390,20 +391,20 @@ def associate_types(
             if obj in robots:
                 objects_with_types += [(obj, "Robot")]
 
-            elif any(obj.startswith(v) for v in vegetables):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in vegetables):
                 objects_with_types += [(obj, "PhysicalObject")]
 
-            elif any(obj.startswith(t) for t in tools):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in tools):
                 objects_with_types += [(obj, "Tool")]
 
-            elif any(obj.startswith(l) for l in locations):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in locations):
                 objects_with_types += [(obj, "Location")]
 
     return objects_with_types
 
 
 def create_pddl_objects(
-    bboxes: list[tuple[str, list[float]]],
+    bboxes: List[Tuple[str, List[float]]],
     domain: str="cooking",
 ):
     objects = [ x[0] for x in bboxes ]

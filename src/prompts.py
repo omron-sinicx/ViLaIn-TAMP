@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from typing import List, Tuple, Dict
+
 from vilain_utils import PDDLDomain
 from vilain_utils import convert_predicates, convert_actions, convert_bboxes
 
@@ -27,8 +29,8 @@ Detect objects and output the bounding boxes in the form of [xmin, ymin, xmax, y
 def create_prompt_for_initial_state(
     pddl_domain_str: str, # PDDL domain
     pddl_problem_obj_str: str, # PDDL objects
-    bboxes: list[tuple[str, list[float]]], # a liist of tuples of an object name and coordinates
-    examples: list[dict[str, str]]=[], # in-context examples
+    bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
+    examples: List[Dict[str, str]]=[], # in-context examples
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 
@@ -73,7 +75,7 @@ def create_prompt_for_goal_conditions(
     pddl_problem_obj_str: str, # PDDL objects
     pddl_problem_init_str: str, # PDDL initial state
     instruction: str, # a linguistic instruction
-    examples: list[dict[str, str]]=[], # in-context examples
+    examples: List[Dict[str, str]]=[], # in-context examples
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 
@@ -124,8 +126,8 @@ def create_prompt_for_revision(
     pddl_problem_str: str, # PDDL problem
     instruction: str, # a linguistic instruction
     feedback: str, # motion planning feedback for errors
-    prev_feedbacks, # a list of previously obtained motion planning feedbacks
-    prev_revisions, # a list of previsouly revised PDs
+    prev_feedbacks: List[str], # a list of previously obtained motion planning feedbacks
+    prev_revisions: List[str], # a list of previsouly revised PDs
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
 
