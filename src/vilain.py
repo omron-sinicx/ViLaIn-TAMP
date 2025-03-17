@@ -304,13 +304,22 @@ if __name__ == "__main__":
     ]
 
     # create a model 
-    #model = "gpt-4o-2024-11-20"
-    #model = "Qwen/Qwen2.5-Coder-32B-Instruct"
-    model = "./models/quantized/gptq-int4/qwen2.5-coder-32b-instruct"
+    # use GPT
+#    model = "gpt-4o-2024-11-20"
+
+    # use Qwen-Coder
+#    model = "./models/quantized/gptq-int4/qwen2.5-coder-32b-instruct"
+#    model_args = {
+#        "base_url": "http://localhost:22222/v1",
+#        "api_key": "qwen-2-5-coder-32b-instruct",
+#    }
+
+    # use Qwen-VL
+    model = "Qwen/Qwen2.5-VL-7B-Instruct"
 
     model_args = {
-        "base_url": "http://localhost:22222/v1",
-        "api_key": "qwen-2-5-coder-32b-instruct",
+        "base_url": "http://localhost:33333/v1",
+        "api_key": "qwen-2-5-vl-7b-instruct",
     }
 
     #model="o1-2024-12-17"
@@ -356,7 +365,8 @@ if __name__ == "__main__":
         pddl_domain_str,
         pddl_problem_obj_strs[0],
         all_bboxes[0],
-        None,
+        #None,
+        images[0],
     )
 
     print("-" * 30)
