@@ -5,7 +5,6 @@ import base64
 from io import BytesIO
 from PIL import Image
 from openai import OpenAI
-
 from vilain_utils import PDDLProblem, PDDLDomain
 from vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments
 from prompts import create_prompt_for_object_detection
@@ -17,14 +16,19 @@ class ViLaIn:
     def __init__(
         self,
         model: str, # gpt-4o, o1, o3-mini
+        model_args: str=None, # must be specified when using models on a vLLM server
         detection_args: dict[str, str]=None, # OpenAI API arguments for object detection
         detection_model: str=None, # detection mdoel (e.g., "Qwen/Qwen2.5-VL-7B-Instruct")
     ):
         self.model = model
+        self.model_args = model_args
         self.detection_args = detection_args
         self.detection_model = detection_model
 
-        self.client = OpenAI()
+        if model_args is not None:
+            self.client = OpenAI(**model_args)
+        else:
+            self.client = OpenAI()
 
         if detection_args and detection_model:
             self.client_for_detection = OpenAI(**detection_args)
@@ -300,55 +304,65 @@ if __name__ == "__main__":
     ]
 
     # create a model 
-    model="gpt-4o-2024-11-20"
+    #model = "gpt-4o-2024-11-20"
+    #model = "Qwen/Qwen2.5-Coder-32B-Instruct"
+    model = "./models/quantized/gptq-int4/qwen2.5-coder-32b-instruct"
+
+    model_args = {
+        "base_url": "http://localhost:22222/v1",
+        "api_key": "qwen-2-5-coder-32b-instruct",
+    }
+
     #model="o1-2024-12-17"
     detection_model = "Qwen/Qwen2.5-VL-7B-Instruct"
+
     detection_args = {
         "base_url": "http://localhost:33333/v1",
         "api_key": "qwen-2-5-vl-7b-instruct",
     }
 
-    vilain = ViLaIn(model, detection_args, detection_model)
+    vilain = ViLaIn(model, model_args, detection_args, detection_model)
 
-    # test object detection
-    import copy 
-    fixed_bboxes = copy.deepcopy(all_bboxes[-1])
-    obj_len = len(fixed_bboxes)
-
-    for i in reversed(range(obj_len)):
-        obj = fixed_bboxes[i][0]
-
-        if obj in ("cucumber", "carrot", "tomato", "cutting_board", "bowl"):
-            del fixed_bboxes[i]
-        else:
-            bbox = fixed_bboxes[i][1]
-            fixed_bboxes[i] = (obj, [ b / 512 for b in bbox ])
-
-#    # test initial state generation
-    result = vilain.detect_objects(
-        images[-1],
-        fixed_bboxes,
-        "cooking",
-        (640, 640),
-    )
-
-    print("-" * 30)
-    print("### prompt:\n", result["prompt"])
-    print("### bboxes:\n", result["bboxes"])
-    print("### The generated objects:\n", result["result"])
-    print()
-
-#    result = vilain.generate_initial_state(
-#        pddl_domain_str,
-#        pddl_problem_obj_strs[0],
-#        all_bboxes[0],
-#        images[0],
+#    # test object detection
+#    import copy 
+#    fixed_bboxes = copy.deepcopy(all_bboxes[-1])
+#    obj_len = len(fixed_bboxes)
+#
+#    for i in reversed(range(obj_len)):
+#        obj = fixed_bboxes[i][0]
+#
+#        if obj in ("cucumber", "carrot", "tomato", "cutting_board", "bowl"):
+#            del fixed_bboxes[i]
+#        else:
+#            bbox = fixed_bboxes[i][1]
+#            fixed_bboxes[i] = (obj, [ b / 512 for b in bbox ])
+#
+#    # test object detection
+#    result = vilain.detect_objects(
+#        images[-1],
+#        fixed_bboxes,
+#        "cooking",
+#        (640, 640),
 #    )
 #
 #    print("-" * 30)
-#    print("prompt:\n", result["prompt"])
-#    print("The generated initial state:\n", result["result"])
+#    print("### prompt:\n", result["prompt"])
+#    print("### bboxes:\n", result["bboxes"])
+#    print("### The generated objects:\n", result["result"])
 #    print()
+
+    # test initial state generation without image
+    result = vilain.generate_initial_state(
+        pddl_domain_str,
+        pddl_problem_obj_strs[0],
+        all_bboxes[0],
+        None,
+    )
+
+    print("-" * 30)
+    print("prompt:\n", result["prompt"])
+    print("The generated initial state:\n", result["result"])
+    print()
 
 #    # test initial state generation with example
 #    result = vilain.generate_initial_state(
