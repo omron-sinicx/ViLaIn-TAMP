@@ -269,7 +269,7 @@ if __name__ == "__main__":
     ## prepare inputs
     import json
 
-    data_dir = "./data/vilain_tamp_data/integrated/cooking"
+    data_dir = "./data/vilain_tamp_data/cooking"
 
     # PDDL domain and problems
     pddl_domain_str = open(f"{data_dir}/domain.pddl").read()
@@ -321,8 +321,8 @@ if __name__ == "__main__":
 
     # create a model 
     # use GPT
-#    model = "gpt-4o-2024-11-20"
-#    model_args = None
+    model = "gpt-4o-2024-11-20"
+    model_args = None
 
     # use Qwen-Coder
 #    model = "./models/quantized/gptq-int4/qwen2.5-coder-32b-instruct"
@@ -349,51 +349,46 @@ if __name__ == "__main__":
 
     vilain = ViLaIn(model, model_args, detection_args, detection_model)
 
-    # test object detection
-    result = vilain.detect_objects(
-        images[-1],
-        fixed_bboxes,
-        "cooking",
-        (640, 640),
-    )
-
-    print("-" * 30)
-    print("### prompt:\n", result["prompt"])
-    print("### bboxes:\n", result["bboxes"])
-    print("### The generated objects:\n", result["result"])
-    print()
-
-    # test initial state generation without image
-    result = vilain.generate_initial_state(
-        pddl_domain_str,
-        pddl_problem_obj_strs[0],
-        all_bboxes[0],
-        #None,
-        images[0],
-    )
-
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The generated initial state:\n", result["result"])
-    print()
-
-    # test initial state generation without example
-    result = vilain.generate_initial_state(
-        pddl_domain_str,
-        pddl_problem_obj_strs[0],
-        all_bboxes[0],
-        images[0],
-        [{
-            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
-            "bboxes": all_bboxes[1],
-            "pddl_problem_init_str": pddl_problem_init_strs[1],
-        }],
-    )
-
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The generated initial state with an example:\n", result["result"])
-    print()
+#    # test object detection
+#    result = vilain.detect_objects(
+#        images[-1],
+#        fixed_bboxes,
+#        "cooking",
+#        (640, 640),
+#    )
+#
+#    print("-" * 30)
+#    print("### prompt:\n", result["prompt"])
+#    print("### bboxes:\n", result["bboxes"])
+#    print("### The generated objects:\n", result["result"])
+#    print()
+#
+#    # test initial state generation without image
+#    result = vilain.generate_initial_state(
+#        pddl_domain_str,
+#        pddl_problem_obj_strs[0],
+#        all_bboxes[0],
+#        #None,
+#        images[0],
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", result["prompt"])
+#    print("The generated initial state:\n", result["result"])
+#    print()
+#
+#    # test initial state generation without example
+#    result = vilain.generate_initial_state(
+#        pddl_domain_str,
+#        pddl_problem_obj_strs[0],
+#        all_bboxes[0],
+#        images[0],
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", result["prompt"])
+#    print("The generated initial state with an example:\n", result["result"])
+#    print()
 
 #    # test initial state generation with example
 #    result = vilain.generate_initial_state(
@@ -413,18 +408,18 @@ if __name__ == "__main__":
 #    print("The generated initial state with an example:\n", result["result"])
 #    print()
 
-    # test goal conditions generation without example
-    result = vilain.generate_goal_conditions(
-        pddl_domain_str,
-        pddl_problem_obj_strs[0],
-        pddl_problem_init_strs[0],
-        instructions[0],
-    )
-
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The generated goal conditions:\n", result["result"])
-    print()
+#    # test goal conditions generation without example
+#    result = vilain.generate_goal_conditions(
+#        pddl_domain_str,
+#        pddl_problem_obj_strs[0],
+#        pddl_problem_init_strs[0],
+#        instructions[0],
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", result["prompt"])
+#    print("The generated goal conditions:\n", result["result"])
+#    print()
 
 #    # test goal conditions generation with example
 #    result = vilain.generate_goal_conditions(
@@ -444,6 +439,55 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The generated goal conditions with example:\n", result["result"])
 #    print()
+
+    # test object detection, initial state generation, and goal conditions generation
+    obj_result = vilain.detect_objects(
+        images[0],
+        fixed_bboxes,
+        "cooking",
+        (640, 640),
+    )
+
+    print("-" * 30)
+    print("### prompt:\n", obj_result["prompt"])
+    print("### bboxes:\n", obj_result["bboxes"])
+    print("### The generated objects:\n", obj_result["result"])
+    print()
+
+    init_result = vilain.generate_initial_state(
+        pddl_domain_str,
+        obj_result["result"],
+        obj_result["bboxes"],
+        images[0],
+        [{
+            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
+            "bboxes": all_bboxes[1],
+            "pddl_problem_init_str": pddl_problem_init_strs[1],
+        }],
+    )
+
+    print("-" * 30)
+    print("prompt:\n", init_result["prompt"])
+    print("The generated initial state with an example:\n", init_result["result"])
+    print()
+
+    goal_result = vilain.generate_goal_conditions(
+        pddl_domain_str,
+        obj_result["result"],
+        init_result["result"],
+        instructions[0],
+        [{
+            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
+            "pddl_problem_init_str": pddl_problem_init_strs[1],
+            "instruction": instructions[1],
+            "pddl_problem_goal_str": pddl_problem_goal_strs[1],
+        }],
+    )
+
+    print("-" * 30)
+    print("prompt:\n", goal_result["prompt"])
+    print("The generated goal conditions:\n", goal_result["result"])
+    print()
 
 #    # feedback for PD revision 
 #    mtc_comments = """

@@ -80,7 +80,7 @@ def create_prompt_for_goal_conditions(
     pddl_domain = PDDLDomain(pddl_domain_str)
 
     prompt1 = f"""
-You are an agent for robot task planning. Given a linguistic instruction that specifies the task and objects with types appeared in the environment, you are expected to write the desired goal conditions as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. The predicates for the goal conditions should be about target objects after completing the task. A predicate consists of a predicate name and its arguments, and written predicates are assumed to be true. Available predicates are defined as:
+You are an agent for robot task planning. Given a linguistic instruction specifying the task and objects with types appeared in the environment, you are expected to write the desired goal conditions as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. The predicates for the goal conditions should be predicates about target objects after completing the task. A predicate consists of a predicate name and its arguments, and written predicates are assumed to be true. Available predicates are defined as:
 {convert_predicates(pddl_domain)}
 """.strip()
 
