@@ -3,24 +3,17 @@
 from typing import List, Tuple, Dict
 
 from vilain_utils import PDDLDomain
-from vilain_utils import convert_predicates, convert_actions, convert_bboxes
+from vilain_utils import convert_predicates, convert_actions, convert_bboxes, get_object_list
 
 
 def create_prompt_for_object_detection(domain: str):
-    if domain == "cooking":
-        objects = {
-            "cucumber": "a regular cucumber.",
-            "carrot": "a regular carrot with a green stem.",
-            "apple": "a regular apple, but might look like tomato",
-            "plate": "a flat plate. The color is light red or light green.", 
-            "bowl": "a white, deep bowl.",
-#            "cutting_board": "a square, wooden cutting board with light natural wood color.",
-        }
+    objects = get_object_list(domain)
 
-        objects_str = "\n".join([ f"- '{obj}': {objects[obj]}" for obj in objects ])
-
-        prompt = f"""
-Detect objects and output the bounding boxes in the form of [xmin, ymin, xmax, ymax]. The objects to detect are:\n{objects_str}. Output the results in JSON format where the key is an object name in string and the value is the bounding box (e.g., {{ "cucumber": [x1, y1, x2, y2], "plate": [x1, y1, x2, y2], ...}}). If multiple objects are detected for a single object type, add a number to the object name incrementally from the second object (e.g., plate, plate2, plate3, ...). Objects that do not appear in the image must not be included in the output.
+#    prompt = f"""
+#Detect objects and output the bounding boxes in the form of [xmin, ymin, xmax, ymax]. The objects to detect are:\n{objects_str}. Output the results in JSON format where the key is an object name in string and the value is the bounding box (e.g., {{ "cucumber": [x1, y1, x2, y2], "plate": [x1, y1, x2, y2], ...}}). If multiple objects are detected for a single object type, add a number to the object name incrementally from the second object (e.g., plate, plate2, plate3, ...). Objects that do not appear in the image must not be included in the output.
+#""".strip()
+    prompt = f"""
+Given an image showing a robotic experiment environment, detect the following objects:\n{objects}\nOutput the bounding boxes for the objects in the form of [xmin, ymin, xmax, ymax].
 """.strip()
 
     return prompt

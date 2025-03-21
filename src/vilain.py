@@ -82,55 +82,66 @@ class ViLaIn:
                 "prompt": "",
             }
 
-        try:
-            # resize image
-            resized_pil_image = Image.open(BytesIO(base64.b64decode(image))).convert("RGB").resize(size)
-            buffer = BytesIO()
-            resized_pil_image.save(buffer, "png")
-            resized_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        success = False
+        num_trial = 0 # in case the output format is wrong
 
-            # get a prompt
-            prompt = create_prompt_for_object_detection(domain)
+        while num_trial < 5:
+            try:
+                # resize image
+                resized_pil_image = Image.open(BytesIO(base64.b64decode(image))).convert("RGB").resize(size)
+                buffer = BytesIO()
+                resized_pil_image.save(buffer, "png")
+                resized_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-            # generate bounding boxes with parameters
-            # The params were recommended at https://qwen.readthedocs.io/en/latest/deployment/vllm.html 
-            # (accessed on March 14, 2025)
-            completion = self.client_for_detection.chat.completions.create(
-                model=self.detection_model,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt,
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{resized_image}"},
-                        },
-                    ],
-                }],
-                temperature=0.7,
-                top_p=0.8,
-                max_tokens=2048,
-                extra_body={
-                    "repetition_penalty": 1.05,
-                },
-            )
+                # get a prompt
+                prompt = create_prompt_for_object_detection(domain)
 
-            # extract the output in json format
-            output = completion.choices[0].message.content
-            bboxes = process_bboxes(
-                output, 
-                fixed_bboxes,
-                size,
-            )
+                # generate bounding boxes with parameters
+                # The params were recommended at https://qwen.readthedocs.io/en/latest/deployment/vllm.html 
+                # (accessed on March 14, 2025)
+                completion = self.client_for_detection.chat.completions.create(
+                    model=self.detection_model,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt,
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/jpeg;base64,{resized_image}"},
+                            },
+                        ],
+                    }],
+                    temperature=0.7,
+                    top_p=0.8,
+                    max_tokens=2048,
+                    extra_body={
+                        "repetition_penalty": 1.05,
+                    },
+                )
 
-            result = create_pddl_objects(bboxes, domain)
+                # extract the output in json format
+                output = completion.choices[0].message.content
+                bboxes = process_bboxes(
+                    output, 
+                    fixed_bboxes,
+                    size,
+                    domain,
+                )
 
-        except Exception as e:
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                result = create_pddl_objects(bboxes, domain)
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                num_trial += 1
 
         return {
             "result": result,
@@ -270,13 +281,16 @@ if __name__ == "__main__":
     import json
 
     data_dir = "./data/vilain_tamp_data/cooking"
+    #task = "slicing"
+    task = "object_collision"
 
     # PDDL domain and problems
     pddl_domain_str = open(f"{data_dir}/domain.pddl").read()
 
     pddl_problem_strs = [
-        open(f"{data_dir}/slicing/problems/problem{i}.pddl").read()
-        for i in range(1, 10+1)
+        #open(f"{data_dir}/{task}/problems/problem{i}.pddl").read()
+        open(f"{data_dir}/{task}/success/problem{i}.pddl").read()
+        for i in range(1, 5+1)
     ]
 
     pddl_problems = [
@@ -301,23 +315,23 @@ if __name__ == "__main__":
 
     # instructions
     instructions = [
-        open(f"{data_dir}/slicing/instructions/problem{i}.txt").read()
-        for i in range(1, 10+1)
+        open(f"{data_dir}/{task}/instructions/problem{i}.txt").read()
+        for i in range(1, 5+1)
     ]
 
     # image (scene observation) paths
     images = [
-        base64.b64encode(open(f"{data_dir}/slicing/observations/problem{i}.png", "rb").read()).decode("utf-8")
-        for i in range(1, 10+1)
+        base64.b64encode(open(f"{data_dir}/{task}/observations/problem{i}.png", "rb").read()).decode("utf-8")
+        for i in range(1, 5+1)
     ]
 
     # bounding boxes for images
     all_bboxes = [
-        json.load(open(f"{data_dir}/slicing/bboxes/problem{i}.json"))
-        for i in range(1, 10+1)
+        json.load(open(f"{data_dir}/{task}/bboxes/problem{i}.json"))
+        for i in range(1, 5+1)
     ]
 
-    fixed_bboxes = json.load(open(f"{data_dir}/slicing/bboxes/fixed_objects.json"))
+    fixed_bboxes = json.load(open(f"{data_dir}/{task}/bboxes/fixed_objects.json"))
 
     # create a model 
     # use GPT
@@ -349,20 +363,23 @@ if __name__ == "__main__":
 
     vilain = ViLaIn(model, model_args, detection_args, detection_model)
 
-#    # test object detection
-#    result = vilain.detect_objects(
-#        images[-1],
-#        fixed_bboxes,
-#        "cooking",
-#        (640, 640),
-#    )
-#
-#    print("-" * 30)
-#    print("### prompt:\n", result["prompt"])
-#    print("### bboxes:\n", result["bboxes"])
-#    print("### The generated objects:\n", result["result"])
-#    print()
-#
+
+    # test object detection
+    for i in range(5):
+        result = vilain.detect_objects(
+            images[i],
+            fixed_bboxes,
+            "cooking",
+            (640, 640),
+        )
+
+        print("-" * 30)
+        print("### prompt:\n", result["prompt"])
+        print("### bboxes:\n", result["bboxes"])
+        print("### The generated objects:\n", result["result"])
+        print()
+
+
 #    # test initial state generation without image
 #    result = vilain.generate_initial_state(
 #        pddl_domain_str,
@@ -376,7 +393,8 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The generated initial state:\n", result["result"])
 #    print()
-#
+
+
 #    # test initial state generation without example
 #    result = vilain.generate_initial_state(
 #        pddl_domain_str,
@@ -389,6 +407,7 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The generated initial state with an example:\n", result["result"])
 #    print()
+
 
 #    # test initial state generation with example
 #    result = vilain.generate_initial_state(
@@ -408,6 +427,7 @@ if __name__ == "__main__":
 #    print("The generated initial state with an example:\n", result["result"])
 #    print()
 
+
 #    # test goal conditions generation without example
 #    result = vilain.generate_goal_conditions(
 #        pddl_domain_str,
@@ -420,6 +440,7 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The generated goal conditions:\n", result["result"])
 #    print()
+
 
 #    # test goal conditions generation with example
 #    result = vilain.generate_goal_conditions(
@@ -440,54 +461,56 @@ if __name__ == "__main__":
 #    print("The generated goal conditions with example:\n", result["result"])
 #    print()
 
-    # test object detection, initial state generation, and goal conditions generation
-    obj_result = vilain.detect_objects(
-        images[0],
-        fixed_bboxes,
-        "cooking",
-        (640, 640),
-    )
 
-    print("-" * 30)
-    print("### prompt:\n", obj_result["prompt"])
-    print("### bboxes:\n", obj_result["bboxes"])
-    print("### The generated objects:\n", obj_result["result"])
-    print()
+#    # test object detection, initial state generation, and goal conditions generation
+#    obj_result = vilain.detect_objects(
+#        images[0],
+#        fixed_bboxes,
+#        "cooking",
+#        (640, 640),
+#    )
+#
+#    print("-" * 30)
+#    print("### prompt:\n", obj_result["prompt"])
+#    print("### bboxes:\n", obj_result["bboxes"])
+#    print("### The generated objects:\n", obj_result["result"])
+#    print()
+#
+#    init_result = vilain.generate_initial_state(
+#        pddl_domain_str,
+#        obj_result["result"],
+#        obj_result["bboxes"],
+#        images[0],
+#        [{
+#            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
+#            "bboxes": all_bboxes[1],
+#            "pddl_problem_init_str": pddl_problem_init_strs[1],
+#        }],
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", init_result["prompt"])
+#    print("The generated initial state with an example:\n", init_result["result"])
+#    print()
+#
+#    goal_result = vilain.generate_goal_conditions(
+#        pddl_domain_str,
+#        obj_result["result"],
+#        init_result["result"],
+#        instructions[0],
+#        [{
+#            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
+#            "pddl_problem_init_str": pddl_problem_init_strs[1],
+#            "instruction": instructions[1],
+#            "pddl_problem_goal_str": pddl_problem_goal_strs[1],
+#        }],
+#    )
+#
+#    print("-" * 30)
+#    print("prompt:\n", goal_result["prompt"])
+#    print("The generated goal conditions:\n", goal_result["result"])
+#    print()
 
-    init_result = vilain.generate_initial_state(
-        pddl_domain_str,
-        obj_result["result"],
-        obj_result["bboxes"],
-        images[0],
-        [{
-            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
-            "bboxes": all_bboxes[1],
-            "pddl_problem_init_str": pddl_problem_init_strs[1],
-        }],
-    )
-
-    print("-" * 30)
-    print("prompt:\n", init_result["prompt"])
-    print("The generated initial state with an example:\n", init_result["result"])
-    print()
-
-    goal_result = vilain.generate_goal_conditions(
-        pddl_domain_str,
-        obj_result["result"],
-        init_result["result"],
-        instructions[0],
-        [{
-            "pddl_problem_obj_str": pddl_problem_obj_strs[1],
-            "pddl_problem_init_str": pddl_problem_init_strs[1],
-            "instruction": instructions[1],
-            "pddl_problem_goal_str": pddl_problem_goal_strs[1],
-        }],
-    )
-
-    print("-" * 30)
-    print("prompt:\n", goal_result["prompt"])
-    print("The generated goal conditions:\n", goal_result["result"])
-    print()
 
 #    # feedback for PD revision 
 #    mtc_comments = """
@@ -530,7 +553,8 @@ if __name__ == "__main__":
 #    # the first revision 
 #    prev_feedbacks = []
 #    prev_revisions = []
-#
+
+
 #    # test PD revision with MTC feedbacks (object collision case, 1st time)
 #    result = vilain.revise_problem_description(
 #        pddl_domain_rev_str,
@@ -546,7 +570,8 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The revised PD (1st):\n", result["result"])
 #    print()
-#
+
+
 #    # test PD revision with MTC feedbacks (object collision case, 2nd time)
 #    prev_feedbacks += [feedback]
 #    prev_revisions += [result["result"]]

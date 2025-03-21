@@ -254,15 +254,25 @@ def convert_actions(pddl_domain: PDDLDomain):
     return "\n".join(pddl_domain.pddl_actions)
 
 
-def extract_json(output: str):
-    start = output.index("{")
+def extract_json(
+    output: str,
+    output_format: str="brace",
+):
+    if output_format == "brace":
+        left = "{"
+        right = "}"
+    elif output_format == "square":
+        left = "["
+        right = "]"
+
+    start = output.index(left)
     end = None
     stack = 0
 
     for i in range(start, len(output)):
-        if output[i] == "{":
+        if output[i] == left:
             stack += 1
-        if output[i] == "}":
+        if output[i] == right:
             stack -= 1
 
         if stack <= 0:
@@ -344,24 +354,108 @@ def rescale_bboxes(
     return new_bboxes
 
 
+def compute_iou(
+    bbox1,
+    bbox2,
+):
+    xmin_1, ymin_1, xmax_1, ymax_1 = bbox1
+    xmin_2, ymin_2, xmax_2, ymax_2 = bbox2
+
+    inter_xmin = max(xmin_1, xmin_2)
+    inter_ymin = max(ymin_1, ymin_2)
+    inter_xmax = min(xmax_1, xmax_2)
+    inter_ymax = min(ymax_1, ymax_2)
+
+    inter_width = max(0, inter_xmax - inter_xmin)
+    inter_height = max(0, inter_ymax - inter_ymin)
+    inter_area = inter_width * inter_height
+
+    area1 = (xmax_1 - xmin_1) * (ymax_1 - ymin_1)
+    area2 = (xmax_2 - xmin_2) * (ymax_2 - ymin_2)
+
+    union_area = area1 + area2 - inter_area
+
+    iou = inter_area / union_area
+
+    return iou
+
+
+def get_object_list(domain: str):
+    if domain == "cooking":
+        objects = [
+            {"label": "cucumber", "description": "a regular cucumber."}, 
+            {"label": "carrot", "description": "a regular carrot."},
+            {"label": "apple", "description": "a regular apple"},
+            {"label": "plate", "description": "a flat, light green or light red plate."},
+            {"label": "bowl", "description": "a deep, white bowl."},
+#            "cutting_board": "a square, wooden cutting board with light natural wood color.",
+        ]
+
+    return objects
+
+
 def process_bboxes(
     output: str,
     fixed_bboxes: List[Tuple[str, List[float]]],
     size: Tuple[int],
+    domain: str,
 ):
     """Extract bboxes in json from the output and post-process the generated bounding boxes"""
 
     # get generated bboxes
-    output_json = json.loads(extract_json(output))
+    output_json = json.loads(extract_json(output, "square"))
 
-    keys = list(output_json.keys())
-    bboxes = []
+    objects = get_object_list(domain)
 
-    for key in keys:
-        if output_json[key] is None or len(output_json[key]) != 4:
-            del output_json[key]
-        else:
-            bboxes += [(key, output_json[key])]
+    obj_bboxes = defaultdict(list) # store bounding boxes for each object type
+    all_bboxes = [] # store all bounding boxes 
+    result = {}
+
+    for x in output_json:
+        bbox = x["bbox_2d"]
+
+        if len(bbox) == 4:
+            label = None
+
+            for obj in objects:
+                if x["label"].startswith(obj["label"]):
+                    label = x["label"]
+                    break
+
+            if label is None:
+                continue
+            else:
+                is_overlapped = False
+
+                for seen_bbox in obj_bboxes[label]:
+                    iou = compute_iou(bbox, seen_bbox)
+
+                    if iou >= 0.9:
+                        #print(f"{label} is overlapped: {bbox} and {seen_bbox}")
+                        is_overlapped = True
+
+                for seen_bbox in all_bboxes:
+                    iou = compute_iou(bbox, seen_bbox)
+
+                    if iou >= 0.99:
+                        #print(f"{label} is overlapped: {bbox} and {seen_bbox}")
+                        is_overlapped = True
+
+                if not is_overlapped:
+                    obj_label = label
+
+                    if len(obj_bboxes[label]) > 0:
+                        obj_label += str(len(obj_bboxes[label]) + 1)
+
+                    result[obj_label] = bbox
+
+                    obj_bboxes[label] += [bbox]
+                    all_bboxes += [bbox]
+
+    bboxes = [
+        [key, result[key]]
+        for key in sorted(result.keys())
+    ]
 
     # rescale bounding boxes for fixed objects
     fixed_bboxes = rescale_bboxes(
