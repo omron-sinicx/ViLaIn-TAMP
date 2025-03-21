@@ -128,7 +128,7 @@ def create_prompt_for_revision(
 You are an agent for robot task planning. Given a linguistic instruction and a scene observation of image, you are expected to write a problem specification that consists of objects, the initial state of the environment, and the desired goal conditions. The initial state and the goal conditions are expressed by predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assume to be true. Negative predicates (e.g., (not (predicate ...)) do not appear in the initial state. Avaiable predicates are defined as:
 {convert_predicates(pddl_domain)}
 
-With the generated specification, task planner first finds a sequence of symbolic actions, and motion planner then finds a sequence of physical actions. The symbolic actions contais preconditions and effects that must be True before and after it is executed, respectively. The actions are defined as:
+With the generated specification, task planner first finds a sequence of symbolic actions, and motion planner then finds a sequence of physical actions. The symbolic actions contain preconditions and effects that must be True before and after it is executed, respectively. The actions are defined as:
 {convert_actions(pddl_domain)}
 
 Now you are given the instruction and scene observation.
@@ -142,7 +142,7 @@ You created the following problem specification:
     prompt_2 = ""
     for prev_feedback, prev_revision in zip(prev_feedbacks, prev_revisions):
         prompt_2 += f"""
-However, motion planning failed and returned the following feedback:
+However, planning failed and returned the following feedback:
 {prev_feedback}
 
 And you revised and wrote the following specification:
@@ -162,20 +162,42 @@ And you revised and wrote the following specification:
 #"""
 
     prompt_3 = f"""
-However, motion planning failed and returned the following feedback:
+However, planning failed and returned the following feedback:
 {feedback}
 
-We assume that motion planning failure occurs because the problem specification is incomplete. Could you revise the above specification by revising the initial state or the goal conditions?
+We assume that planning failure occurs because the problem specification is incomplete. Could you revise the above specification?
 """.strip()
 
-#    # (Experimental) to see what if generating explanation and feedback (if failed) affects the results
-#    prompt_3 = f"""
-#However, motion planning failed and returned the following feedback:
-#{feedback}
-#
-#Could you (1) revise the above problem specification based on the feedback to fix the issue and (2) explain what improvments you expect with this revision? Answers to (1) and (2) must be enclosed by ``` respectively.
-#""".strip()
-
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
+
+
+def create_prompt_for_task_planning(
+    pddl_domain_str: str, # PDDL domain
+    pddl_problem_obj_str: str, # PDDL objects
+    instruction: str, # a linguistic instruction
+    bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
+):
+    pddl_domain = PDDLDomain(pddl_domain_str)
+
+    prompt = f"""
+You are an agent for robot task planning. You are expected to write a task plan that are a sequence of actions. The following is provided as input: A scene observation of image, objects with types appeared in the environment, bounding boxes for the objects, and an instruction that specifies the goal. Available actions are defined as:
+{convert_actions(pddl_domain)}
+
+The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates. The predicates are defined as:
+{convert_predicates(pddl_domain)}
+
+The objects are:
+{pddl_problem_obj_str}
+
+Bounding boxes are:
+{convert_bboxes(bboxes)}
+
+Instruction is:
+{instruction}
+
+Output the actions that complete the instruction. The actions must be written in the form of a list of actions.
+""".strip()
+
+    return prompt
 
 

@@ -8,10 +8,10 @@ from PIL import Image
 from openai import OpenAI
 
 from vilain_utils import PDDLProblem, PDDLDomain
-from vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments
+from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments
 from prompts import create_prompt_for_object_detection
 from prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
-from prompts import create_prompt_for_revision
+from prompts import create_prompt_for_revision, create_prompt_for_task_planning
 
 
 class ViLaIn:
@@ -274,6 +274,50 @@ class ViLaIn:
             "prompt": prompt,
         }
 
+    def generate_task_plan(
+        self,
+        pddl_domain_str: str, # PDDL domain
+        pddl_problem_obj_str: str, # PDDL objects
+        instruction: str, # a linguistic instruction
+        bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
+        image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
+        without_comments: bool=False, # if true, remove commnets in PDDL domain
+    ):
+        #try:
+        if True: #TODO
+            if without_comments:
+                pddl_domain_str = remove_comments(pddl_domain_str)
+
+            prompt = create_prompt_for_task_planning(
+                pddl_domain_str,
+                pddl_problem_obj_str,
+                instruction,
+                bboxes,
+            )
+
+            content = [{
+                "type": "text",
+                "text": prompt,
+            }]
+
+            if image is not None:
+                content += [{
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                }]
+
+            output = self.generate(content)
+            result = extract_json(output, "square")
+        #except Exception as e:
+        else: #TODO
+            result = f"The generation failed due to the following error:\n{e}"
+            prompt = "N/A"
+
+        return {
+            "result": result,
+            "prompt": prompt,
+        }
+
 
 if __name__ == "__main__":
     """Test ViLaIn functions"""
@@ -289,7 +333,7 @@ if __name__ == "__main__":
 
     pddl_problem_strs = [
         #open(f"{data_dir}/{task}/problems/problem{i}.pddl").read()
-        open(f"{data_dir}/{task}/success/problem{i}.pddl").read()
+        open(f"{data_dir}/{task}/problems/problem{i}.pddl").read()
         for i in range(1, 5+1)
     ]
 
@@ -364,20 +408,20 @@ if __name__ == "__main__":
     vilain = ViLaIn(model, model_args, detection_args, detection_model)
 
 
-    # test object detection
-    for i in range(5):
-        result = vilain.detect_objects(
-            images[i],
-            fixed_bboxes,
-            "cooking",
-            (640, 640),
-        )
-
-        print("-" * 30)
-        print("### prompt:\n", result["prompt"])
-        print("### bboxes:\n", result["bboxes"])
-        print("### The generated objects:\n", result["result"])
-        print()
+#    # test object detection
+#    for i in range(5):
+#        result = vilain.detect_objects(
+#            images[i],
+#            fixed_bboxes,
+#            "cooking",
+#            (640, 640),
+#        )
+#
+#        print("-" * 30)
+#        print("### prompt:\n", result["prompt"])
+#        print("### bboxes:\n", result["bboxes"])
+#        print("### The generated objects:\n", result["result"])
+#        print()
 
 
 #    # test initial state generation without image
@@ -590,5 +634,20 @@ if __name__ == "__main__":
 #    print("prompt:\n", result["prompt"])
 #    print("The revised PD (2nd):\n", result["result"])
 #    print()
+
+
+    # test initial state generation without example
+    result = vilain.generate_task_plan(
+        pddl_domain_str,
+        pddl_problem_obj_strs[0],
+        instructions[0],
+        all_bboxes[0],
+        None, #images[0],
+    )
+
+    print("-" * 30)
+    print("prompt:\n", result["prompt"])
+    print("The generated task plan:\n", result["result"])
+    print()
 
 
