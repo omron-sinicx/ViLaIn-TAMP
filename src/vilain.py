@@ -82,9 +82,9 @@ class ViLaIn:
             }
 
         success = False
-        num_trial = 0 # in case the output format is wrong
+        count = 0 # in case the output format is wrong
 
-        while num_trial < 5:
+        while count < 5:
             try:
                 # resize image
                 resized_pil_image = Image.open(BytesIO(base64.b64decode(image))).convert("RGB").resize(size)
@@ -140,7 +140,7 @@ class ViLaIn:
             if success:
                 break
             else:
-                num_trial += 1
+                count += 1
 
         return {
             "result": result,
@@ -157,33 +157,44 @@ class ViLaIn:
         examples: List=[], # in-context examples
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        try:
-            if without_comments:
-                pddl_domain_str = remove_comments(pddl_domain_str)
+        success = False
+        count = 0 # in case the output format is wrong
 
-            prompt = create_prompt_for_initial_state(
-                pddl_domain_str,
-                pddl_problem_obj_str,
-                bboxes,
-                examples,
-            )
+        while count < 5:
+            try:
+                if without_comments:
+                    pddl_domain_str = remove_comments(pddl_domain_str)
 
-            content = [{
-                "type": "text",
-                "text": prompt,
-            }]
+                prompt = create_prompt_for_initial_state(
+                    pddl_domain_str,
+                    pddl_problem_obj_str,
+                    bboxes,
+                    examples,
+                )
 
-            if image is not None:
-                content += [{
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                content = [{
+                    "type": "text",
+                    "text": prompt,
                 }]
 
-            output = self.generate(content)
-            result = extract_pddl(output, "init")
-        except Exception as e:
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                if image is not None:
+                    content += [{
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    }]
+
+                output = self.generate(content)
+                result = extract_pddl(output, "init")
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                count += 1
 
         return {
             "result": result,
@@ -199,28 +210,39 @@ class ViLaIn:
         examples: List=[], # in-context examples
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        try:
-            if without_comments:
-                pddl_domain_str = remove_comments(pddl_domain_str)
+        success = False
+        count = 0 # in case the output format is wrong
 
-            prompt = create_prompt_for_goal_conditions(
-                pddl_domain_str,
-                pddl_problem_obj_str,
-                pddl_problem_init_str,
-                instruction,
-                examples,
-            )
+        while count < 5:
+            try:
+                if without_comments:
+                    pddl_domain_str = remove_comments(pddl_domain_str)
 
-            content = [{
-                "type": "text",
-                "text": prompt,
-            }]
+                prompt = create_prompt_for_goal_conditions(
+                    pddl_domain_str,
+                    pddl_problem_obj_str,
+                    pddl_problem_init_str,
+                    instruction,
+                    examples,
+                )
 
-            output = self.generate(content)
-            result = extract_pddl(output, "goal")
-        except Exception as e:
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                content = [{
+                    "type": "text",
+                    "text": prompt,
+                }]
+
+                output = self.generate(content)
+                result = extract_pddl(output, "goal")
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                count += 1
 
         return {
             "result": result,
@@ -238,35 +260,46 @@ class ViLaIn:
         prev_revisions: List[str], # a list of previously revised PDDL problems
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        try:
-            if without_comments:
-                pddl_domain_str = remove_comments(pddl_domain_str)
+        success = False
+        count = 0 # in case the output format is wrong
 
-            prompt = create_prompt_for_PD_revision(
-                pddl_domain_str,
-                pddl_problem_str,
-                instruction,
-                feedback,
-                prev_feedbacks,
-                prev_revisions,
-            )
+        while count < 5:
+            try:
+                if without_comments:
+                    pddl_domain_str = remove_comments(pddl_domain_str)
 
-            content = [{
-                "type": "text",
-                "text": prompt,
-            }]
+                prompt = create_prompt_for_PD_revision(
+                    pddl_domain_str,
+                    pddl_problem_str,
+                    instruction,
+                    feedback,
+                    prev_feedbacks,
+                    prev_revisions,
+                )
 
-            if image is not None:
-                content += [{
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                content = [{
+                    "type": "text",
+                    "text": prompt,
                 }]
 
-            output = self.generate(content)
-            result = extract_pddl(output, "whole")
-        except Exception as e:
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                if image is not None:
+                    content += [{
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    }]
+
+                output = self.generate(content)
+                result = extract_pddl(output, "whole")
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                count += 1
 
         return {
             "result": result,
@@ -282,34 +315,44 @@ class ViLaIn:
         image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        try:
-            if without_comments:
-                pddl_domain_str = remove_comments(pddl_domain_str)
+        success = False
+        count = 0 # in case the output format is wrong
 
-            prompt = create_prompt_for_task_planning(
-                pddl_domain_str,
-                pddl_problem_obj_str,
-                instruction,
-                bboxes,
-            )
+        while count < 5:
+            try:
+                if without_comments:
+                    pddl_domain_str = remove_comments(pddl_domain_str)
 
-            content = [{
-                "type": "text",
-                "text": prompt,
-            }]
+                prompt = create_prompt_for_task_planning(
+                    pddl_domain_str,
+                    pddl_problem_obj_str,
+                    instruction,
+                    bboxes,
+                )
 
-            if image is not None:
-                content += [{
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                content = [{
+                    "type": "text",
+                    "text": prompt,
                 }]
 
-            output = self.generate(content)
-            result = extract_json(output, "square")
-        except Exception as e:
-            print("the output = ", output)
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                if image is not None:
+                    content += [{
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    }]
+
+                output = self.generate(content)
+                result = extract_json(output, "square")
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                count += 1
 
         return {
             "result": result,
@@ -329,39 +372,48 @@ class ViLaIn:
         prev_revisions: List[str], # a list of previously revised PDDL problems
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        #try:
-        if True: #TODO
-            if without_comments:
-                pddl_domain_str = remove_comments(pddl_domain_str)
+        success = False
+        count = 0 # in case the output format is wrong
 
-            prompt = create_prompt_for_task_plan_revision(
-                pddl_domain_str,
-                pddl_problem_obj_str,
-                actions,
-                instruction,
-                bboxes,
-                feedback,
-                prev_feedbacks,
-                prev_revisions,
-            )
+        while count < 5:
+            try:
+                if without_comments:
+                    pddl_domain_str = remove_comments(pddl_domain_str)
 
-            content = [{
-                "type": "text",
-                "text": prompt,
-            }]
+                prompt = create_prompt_for_task_plan_revision(
+                    pddl_domain_str,
+                    pddl_problem_obj_str,
+                    actions,
+                    instruction,
+                    bboxes,
+                    feedback,
+                    prev_feedbacks,
+                    prev_revisions,
+                )
 
-            if image is not None:
-                content += [{
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                content = [{
+                    "type": "text",
+                    "text": prompt,
                 }]
 
-            output = self.generate(content)
-            result = extract_json(output, "square")
-        #except Exception as e:
-        else: #TODO
-            result = f"The generation failed due to the following error:\n{e}"
-            prompt = "N/A"
+                if image is not None:
+                    content += [{
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    }]
+
+                output = self.generate(content)
+                result = extract_json(output, "square")
+
+                success = True
+            except Exception as e:
+                result = f"The generation failed due to the following error:\n{e}"
+                prompt = "N/A"
+
+            if success:
+                break
+            else:
+                count += 1
 
         return {
             "result": result,
