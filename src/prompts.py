@@ -14,7 +14,7 @@ def create_prompt_for_object_detection(domain: str):
             "apple": "a regular apple, but might look like tomato",
             "plate": "a flat plate. The color is light red or light green.", 
             "bowl": "a white, deep bowl.",
-            "cutting_board": "a square, wooden cutting board with light natural wood color.",
+#            "cutting_board": "a square, wooden cutting board with light natural wood color.",
         }
 
         objects_str = "\n".join([ f"- '{obj}': {objects[obj]}" for obj in objects ])
