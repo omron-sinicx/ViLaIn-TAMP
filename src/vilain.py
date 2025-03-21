@@ -405,6 +405,10 @@ class ViLaIn:
                 output = self.generate(content)
                 result = extract_json(output, "square")
 
+                # if the output is list of list
+                if type(result[0]) == list:
+                    result = [ r[0] for r in result ]
+
                 success = True
             except Exception as e:
                 result = f"The generation failed due to the following error:\n{e}"
@@ -427,8 +431,8 @@ if __name__ == "__main__":
     import json
 
     data_dir = "./data/vilain_tamp_data/cooking"
-    #task = "slicing"
-    task = "object_collision"
+    task = "slicing"
+    #task = "object_collision"
 
     # PDDL domain and problems
     pddl_domain_str = open(f"{data_dir}/domain.pddl").read()
@@ -739,38 +743,39 @@ if __name__ == "__main__":
 
 
     # test task plan generation
-    result = vilain.generate_task_plan(
-        pddl_domain_str,
-        pddl_problem_obj_strs[0],
-        instructions[0],
-        all_bboxes[0],
-        None, #images[0],
-    )
+    for i in range(1):
+        result = vilain.generate_task_plan(
+            pddl_domain_str,
+            pddl_problem_obj_strs[i],
+            instructions[i],
+            all_bboxes[i],
+            None, #images[0],
+        )
 
-    print("-" * 30)
-    print("prompt:\n", result["prompt"])
-    print("The generated task plan:\n", result["result"])
-    print()
+        print("-" * 30)
+        print("prompt:\n", result["prompt"])
+        print("The generated task plan:\n", result["result"])
+        print()
 
 
-    # test task plan generation with a crafted feedback
-    feedback = "The generated task plan does not have a valid solution."
+        # test task plan generation with a crafted feedback
+        feedback = "The generated task plan does not have a valid solution."
 
-    result2 = vilain.revise_task_plan(
-        pddl_domain_str,
-        pddl_problem_obj_strs[0],
-        result["result"], 
-        instructions[0],
-        all_bboxes[0],
-        None, #images[0],
-        feedback,
-        [],
-        [],
-    )
+        result2 = vilain.revise_task_plan(
+            pddl_domain_str,
+            pddl_problem_obj_strs[i],
+            result["result"], 
+            instructions[i],
+            all_bboxes[i],
+            None, #images[i],
+            feedback,
+            [],
+            [],
+        )
 
-    print("-" * 30)
-    print("prompt:\n", result2["prompt"])
-    print("The generated task plan:\n", result2["result"])
-    print()
+        print("-" * 30)
+        print("prompt:\n", result2["prompt"])
+        print("The generated task plan:\n", result2["result"])
+        print()
 
 
