@@ -9,9 +9,8 @@ from openai import OpenAI
 
 from vilain_utils import PDDLProblem, PDDLDomain
 from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments
-from prompts import create_prompt_for_object_detection
-from prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
-from prompts import create_prompt_for_revision, create_prompt_for_task_planning
+from prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
+from prompts import create_prompt_for_PD_revision, create_prompt_for_task_planning, create_prompt_for_task_plan_revision
 
 
 class ViLaIn:
@@ -243,7 +242,7 @@ class ViLaIn:
             if without_comments:
                 pddl_domain_str = remove_comments(pddl_domain_str)
 
-            prompt = create_prompt_for_revision(
+            prompt = create_prompt_for_PD_revision(
                 pddl_domain_str,
                 pddl_problem_str,
                 instruction,
@@ -283,8 +282,7 @@ class ViLaIn:
         image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
         without_comments: bool=False, # if true, remove commnets in PDDL domain
     ):
-        #try:
-        if True: #TODO
+        try:
             if without_comments:
                 pddl_domain_str = remove_comments(pddl_domain_str)
 
@@ -293,6 +291,58 @@ class ViLaIn:
                 pddl_problem_obj_str,
                 instruction,
                 bboxes,
+            )
+
+            content = [{
+                "type": "text",
+                "text": prompt,
+            }]
+
+            if image is not None:
+                content += [{
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                }]
+
+            output = self.generate(content)
+            result = extract_json(output, "square")
+        except Exception as e:
+            print("the output = ", output)
+            result = f"The generation failed due to the following error:\n{e}"
+            prompt = "N/A"
+
+        return {
+            "result": result,
+            "prompt": prompt,
+        }
+
+    def revise_task_plan(
+        self,
+        pddl_domain_str: str, # PDDL domain
+        pddl_problem_obj_str: str, # an initially generated PDDL problem
+        actions: List[str], # a sequence of symbolic actions
+        instruction: str, # a linguistic instruction
+        bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
+        image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
+        feedback: str, # motion planning feedback
+        prev_feedbacks: List[str], # a list of previously provided feedbacks
+        prev_revisions: List[str], # a list of previously revised PDDL problems
+        without_comments: bool=False, # if true, remove commnets in PDDL domain
+    ):
+        #try:
+        if True: #TODO
+            if without_comments:
+                pddl_domain_str = remove_comments(pddl_domain_str)
+
+            prompt = create_prompt_for_task_plan_revision(
+                pddl_domain_str,
+                pddl_problem_obj_str,
+                actions,
+                instruction,
+                bboxes,
+                feedback,
+                prev_feedbacks,
+                prev_revisions,
             )
 
             content = [{
@@ -636,7 +686,7 @@ if __name__ == "__main__":
 #    print()
 
 
-    # test initial state generation without example
+    # test task plan generation
     result = vilain.generate_task_plan(
         pddl_domain_str,
         pddl_problem_obj_strs[0],
@@ -648,6 +698,27 @@ if __name__ == "__main__":
     print("-" * 30)
     print("prompt:\n", result["prompt"])
     print("The generated task plan:\n", result["result"])
+    print()
+
+
+    # test task plan generation with a crafted feedback
+    feedback = "The generated task plan does not have a valid solution."
+
+    result2 = vilain.revise_task_plan(
+        pddl_domain_str,
+        pddl_problem_obj_strs[0],
+        result["result"], 
+        instructions[0],
+        all_bboxes[0],
+        None, #images[0],
+        feedback,
+        [],
+        [],
+    )
+
+    print("-" * 30)
+    print("prompt:\n", result2["prompt"])
+    print("The generated task plan:\n", result2["result"])
     print()
 
 

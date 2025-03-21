@@ -4,6 +4,7 @@ from typing import List, Tuple, Dict
 
 from vilain_utils import PDDLDomain
 from vilain_utils import convert_predicates, convert_actions, convert_bboxes, get_object_list
+from vilain_utils import get_action_explanations
 
 
 def create_prompt_for_object_detection(domain: str):
@@ -114,7 +115,7 @@ Could you write a set of predicates of the goal conditions for the given instruc
     return f"{prompt1}\n{prompt2}\n{prompt3}"
 
 
-def create_prompt_for_revision(
+def create_prompt_for_PD_revision(
     pddl_domain_str: str, # PDDL domain
     pddl_problem_str: str, # PDDL problem
     instruction: str, # a linguistic instruction
@@ -145,7 +146,7 @@ You created the following problem specification:
 However, planning failed and returned the following feedback:
 {prev_feedback}
 
-And you revised and wrote the following specification:
+And you revised and generated the following specification:
 {prev_revision}
 """
 
@@ -154,7 +155,7 @@ And you revised and wrote the following specification:
 #However, motion planning failed and returned the following feedback:
 #{prev_feedback}
 #
-#And you revised and wrote the following specification:
+#And you revised and generated the following specification:
 #{prev_revision}
 #
 #By the above revision, you are expected to fix the issue as:
@@ -165,7 +166,7 @@ And you revised and wrote the following specification:
 However, planning failed and returned the following feedback:
 {feedback}
 
-We assume that planning failure occurs because the problem specification is incomplete. Could you revise the above specification?
+We assume that planning failure occurs because the problem specification is incomplete. Could you generate the revised specification?
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
@@ -178,10 +179,16 @@ def create_prompt_for_task_planning(
     bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
 ):
     pddl_domain = PDDLDomain(pddl_domain_str)
+    #action_explanations = get_action_explanations()
+    action_explanations = "\n".join([
+        f"- {k}: {v}"
+        for k, v in get_action_explanations().items()
+    ])
 
+#{convert_actions(pddl_domain)}
     prompt = f"""
 You are an agent for robot task planning. You are expected to write a task plan that are a sequence of actions. The following is provided as input: A scene observation of image, objects with types appeared in the environment, bounding boxes for the objects, and an instruction that specifies the goal. Available actions are defined as:
-{convert_actions(pddl_domain)}
+{action_explanations}
 
 The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates. The predicates are defined as:
 {convert_predicates(pddl_domain)}
@@ -195,9 +202,97 @@ Bounding boxes are:
 Instruction is:
 {instruction}
 
-Output the actions that complete the instruction. The actions must be written in the form of a list of actions.
+Output the task plan completes the given instruction by using the actions defined above. The output must be a list of actions in JSON format (e.g., ["pick(...)", ...]) without further explanation.
 """.strip()
+#    prompt = f"""
+#Generate a sequence of actions that accomplishes the following goal:
+#"{instruction}".
+#
+#In the environment, the following objects exist:
+#{pddl_problem_obj_str}
+#
+#The object locations by bounding boxes are:
+#{convert_bboxes(bboxes)}
+#
+#Available actions are:
+#{action_explanations}
+#
+#The output must be a list of actions in JSON format (e.g., ["action(arg1, arg2, ...)", "action(arg1, arg2, ...)", ...]).
+#""".strip()
 
     return prompt
+
+
+def create_prompt_for_task_plan_revision(
+    pddl_domain_str: str, # PDDL domain
+    pddl_problem_obj_str: str, # PDDL objects
+    actions: List[str], # a sequence of symbolic actions
+    instruction: str, # a linguistic instruction
+    bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
+    feedback: str, # motion planning feedback for errors
+    prev_feedbacks: List[str], # a list of previously obtained motion planning feedbacks
+    prev_revisions: List[str], # a list of previsouly revised PDs
+):
+    pddl_domain = PDDLDomain(pddl_domain_str)
+    action_explanations = "\n".join([
+        f"- {k}: {v}"
+        for k, v in get_action_explanations().items()
+    ])
+
+#{convert_actions(pddl_domain)}
+    prompt_1 = f"""
+You are an agent for robot task planning. You are expected to write a task plan that are a sequence of actions. The following is provided as input: A scene observation of image, objects with types appeared in the environment, bounding boxes for the objects, and an instruction that specifies the goal. Available actions are defined as:
+{action_explanations}
+
+The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates. The predicates are defined as:
+{convert_predicates(pddl_domain)}
+
+The objects are:
+{pddl_problem_obj_str}
+
+Bounding boxes are:
+{convert_bboxes(bboxes)}
+
+Instruction is:
+{instruction}
+
+For the above inputs, you generated the following actions:
+{actions}
+""".strip()
+#    prompt_1 = f"""
+#Generate a sequence of actions that accomplishes the following goal:
+#"{instruction}".
+#
+#In the environment, the following objects exist:
+#{pddl_problem_obj_str}
+#
+#The object locations by bounding boxes are:
+#{convert_bboxes(bboxes)}
+#
+#Available actions are:
+#{action_explanations}
+#
+#You generated the following actinos:
+#{actions}
+#""".strip()
+
+    prompt_2 = ""
+    for prev_feedback, prev_revision in zip(prev_feedbacks, prev_revisions):
+        prompt_2 += f"""
+However, planning failed and returned the following feedback:
+{prev_feedback}
+
+And you revised and generated the following actions:
+{prev_revision}
+"""
+
+    prompt_3 = f"""
+However, planning failed and returned the following feedback:
+{feedback}
+
+Based on the feedback, reivse and generate a seuqnece of actions without further explanation?
+""".strip()
+
+    return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
 
 
