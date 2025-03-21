@@ -35,7 +35,7 @@
     (:goal
         (and
             (At apple plate2)
-            (not (At carrot plate2))
+            (At carrot plate)
         )
     )
 )

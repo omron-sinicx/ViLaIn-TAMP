@@ -34,7 +34,7 @@
     (:goal
         (and
             (At cucumber cutting_board)
-            (not (At apple cutting_board))
+            (At apple tray)
         )
     )
 )
