@@ -1,1 +1,0 @@
-The robot is required to move the 'potato' from the 'tray' to the 'plate', but the 'carrot' is already placed on the 'plate'. The robot first needs to move the 'carrot' to 'tray', and then move the 'potato' to the 'plate'.

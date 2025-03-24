@@ -1,1 +1,0 @@
-The robot is required to move the 'cucumber' from the 'tray' to the 'cutting board', but the robot does not recognize that the robot cannot reach the 'cucumber'.
