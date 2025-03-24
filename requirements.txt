@@ -1,3 +1,5 @@
+sam-2
+supervision
 openai
 tqdm
 Pillow
