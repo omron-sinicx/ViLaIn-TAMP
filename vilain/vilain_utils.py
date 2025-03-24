@@ -5,6 +5,7 @@ import re
 import json
 import itertools
 from collections import defaultdict
+from typing import List, Tuple, Dict
 
 
 class PDDLProblem:
@@ -226,7 +227,7 @@ class PDDLDomain:
             self.name2action[action["name"]] = action
 
 
-def convert_bboxes(bboxes: list[tuple[str, list[float]]]):
+def convert_bboxes(bboxes: List[Tuple[str, List[float]]]):
     """Convert json bounding boxes into string.
     Assume that a bounding box is a tuple of an object name and coordinates.
     E.g., ('apple', [x, y, w, h])
@@ -253,15 +254,25 @@ def convert_actions(pddl_domain: PDDLDomain):
     return "\n".join(pddl_domain.pddl_actions)
 
 
-def extract_json(output: str):
-    start = output.index("{")
+def extract_json(
+    output: str,
+    output_format: str="brace",
+):
+    if output_format == "brace":
+        left = "{"
+        right = "}"
+    elif output_format == "square":
+        left = "["
+        right = "]"
+
+    start = output.index(left)
     end = None
     stack = 0
 
     for i in range(start, len(output)):
-        if output[i] == "{":
+        if output[i] == left:
             stack += 1
-        if output[i] == "}":
+        if output[i] == right:
             stack -= 1
 
         if stack <= 0:
@@ -315,8 +326,8 @@ def extract_pddl(
 
 
 def rescale_bboxes(
-    bboxes: list[tuple[str, list[float]]],
-    size: tuple[int], # (width, height)
+    bboxes: List[Tuple[str, List[float]]],
+    size: Tuple[int], # (width, height)
 ):
     # sanity check
     val_min = min([ min(bbox) for _, bbox in bboxes ])
@@ -343,24 +354,108 @@ def rescale_bboxes(
     return new_bboxes
 
 
+def compute_iou(
+    bbox1,
+    bbox2,
+):
+    xmin_1, ymin_1, xmax_1, ymax_1 = bbox1
+    xmin_2, ymin_2, xmax_2, ymax_2 = bbox2
+
+    inter_xmin = max(xmin_1, xmin_2)
+    inter_ymin = max(ymin_1, ymin_2)
+    inter_xmax = min(xmax_1, xmax_2)
+    inter_ymax = min(ymax_1, ymax_2)
+
+    inter_width = max(0, inter_xmax - inter_xmin)
+    inter_height = max(0, inter_ymax - inter_ymin)
+    inter_area = inter_width * inter_height
+
+    area1 = (xmax_1 - xmin_1) * (ymax_1 - ymin_1)
+    area2 = (xmax_2 - xmin_2) * (ymax_2 - ymin_2)
+
+    union_area = area1 + area2 - inter_area
+
+    iou = inter_area / union_area
+
+    return iou
+
+
+def get_object_list(domain: str):
+    if domain == "cooking":
+        objects = [
+            {"label": "cucumber", "description": "a regular cucumber."}, 
+            {"label": "carrot", "description": "a regular carrot."},
+            {"label": "apple", "description": "a regular apple"},
+            {"label": "plate", "description": "a flat, light green or light red plate."},
+            {"label": "bowl", "description": "a deep, white bowl."},
+#            "cutting_board": "a square, wooden cutting board with light natural wood color.",
+        ]
+
+    return objects
+
+
 def process_bboxes(
     output: str,
-    fixed_bboxes: list[tuple[str, list[float]]],
-    size: tuple[int],
+    fixed_bboxes: List[Tuple[str, List[float]]],
+    size: Tuple[int],
+    domain: str,
 ):
     """Extract bboxes in json from the output and post-process the generated bounding boxes"""
 
     # get generated bboxes
-    output_json = json.loads(extract_json(output))
+    output_json = json.loads(extract_json(output, "square"))
 
-    keys = list(output_json.keys())
-    bboxes = []
+    objects = get_object_list(domain)
 
-    for key in keys:
-        if output_json[key] is None or len(output_json[key]) != 4:
-            del output_json[key]
-        else:
-            bboxes += [(key, output_json[key])]
+    obj_bboxes = defaultdict(list) # store bounding boxes for each object type
+    all_bboxes = [] # store all bounding boxes 
+    result = {}
+
+    for x in output_json:
+        bbox = x["bbox_2d"]
+
+        if len(bbox) == 4:
+            label = None
+
+            for obj in objects:
+                if x["label"].startswith(obj["label"]):
+                    label = x["label"]
+                    break
+
+            if label is None:
+                continue
+            else:
+                is_overlapped = False
+
+                for seen_bbox in obj_bboxes[label]:
+                    iou = compute_iou(bbox, seen_bbox)
+
+                    if iou >= 0.9:
+                        #print(f"{label} is overlapped: {bbox} and {seen_bbox}")
+                        is_overlapped = True
+
+                for seen_bbox in all_bboxes:
+                    iou = compute_iou(bbox, seen_bbox)
+
+                    if iou >= 0.99:
+                        #print(f"{label} is overlapped: {bbox} and {seen_bbox}")
+                        is_overlapped = True
+
+                if not is_overlapped:
+                    obj_label = label
+
+                    if len(obj_bboxes[label]) > 0:
+                        obj_label += str(len(obj_bboxes[label]) + 1)
+
+                    result[obj_label] = bbox
+
+                    obj_bboxes[label] += [bbox]
+                    all_bboxes += [bbox]
+
+    bboxes = [
+        [key, result[key]]
+        for key in sorted(result.keys())
+    ]
 
     # rescale bounding boxes for fixed objects
     fixed_bboxes = rescale_bboxes(
@@ -375,7 +470,7 @@ def process_bboxes(
 
 
 def associate_types(
-    objects: list[str],
+    objects: List[str],
     domain: str="cooking",
 ):
     objects_with_types = []
@@ -390,20 +485,20 @@ def associate_types(
             if obj in robots:
                 objects_with_types += [(obj, "Robot")]
 
-            elif any(obj.startswith(v) for v in vegetables):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in vegetables):
                 objects_with_types += [(obj, "PhysicalObject")]
 
-            elif any(obj.startswith(t) for t in tools):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in tools):
                 objects_with_types += [(obj, "Tool")]
 
-            elif any(obj.startswith(l) for l in locations):
+            elif any(len(re.findall(f"{v}\d*", obj)) > 0 for v in locations):
                 objects_with_types += [(obj, "Location")]
 
     return objects_with_types
 
 
 def create_pddl_objects(
-    bboxes: list[tuple[str, list[float]]],
+    bboxes: List[Tuple[str, List[float]]],
     domain: str="cooking",
 ):
     objects = [ x[0] for x in bboxes ]
@@ -435,3 +530,30 @@ def remove_comments(pddl: str):
 
     return new_pddl
 
+
+def get_action_explanations(domain: str="cooking"):
+    if domain == "cooking":
+#        explanations = {
+#            "scan": "The 'scan' action has 3 parameters: a robot, an object, and a location. Preconditions: The robot must be a valid robot with an empty hand, the object should be a valid physical object located at the specified location, and the object must not already be registered by the robot. Effects: After executing this action, the object becomes registered by the robot.",
+#            "pick": "The 'pick' action has 3 parameters: a robot, an object, and a location. Preconditions: The robot must be a valid robot with an empty hand, the object should be a valid physical object registered to the robot and located at the specified location, and the robot must be able to reach the object. Effects: The robot starts grasping the object, the robot's hand is no longer empty, and the object is no longer at the location.",
+#            "place": "The 'place' action has 3 parameters: a robot, an object, and a location. Preconditions: The robot must be a valid robot grasping an object, with the object not at the specified location, and the robot must be able to reach the object. Effects: The object is placed at the location, the robot stops grasping the object, the robot's hand becomes empty, and the object is no longer registered by the robot.",
+#            "equip_tool": "The 'equip_tool' action has 4 parameters: a robot, a tool, a tool holder location, and an object. Preconditions: The robot must be a valid robot with an empty hand, the tool must be at the tool holder location, and the object is fixtured. The robot must be able to reach the tool. Effects: The robot becomes equipped with the tool, the tool is no longer at the location, and the robot's hand is no longer empty.",
+#            "fixture": "The 'fixture' action has 3 parameters: a robot, an object, and a workspace location. Preconditions: The robot must be a valid robot with an empty hand, the object must be at the location, and the location must be a workspace. The robot must be able to reach the object. Effects: The object becomes fixtured, and the robot's hand is no longer empty.",
+#            "slice": "The 'slice' action has 4 parameters: a robot, a tool, an object, and a workspace location. Preconditions: The robot must be equipped with the tool, and the object must be fixtured and located at a workspace. Effects: The object becomes sliced, and it is no longer registered by the robot.",
+#            "unequip_tool": "The 'unequip_tool' action has 3 parameters: a robot, a tool, and a tool holder location. Preconditions: The robot must be a valid robot equipped with a tool, and there must be a tool holder at the location for the tool. Effects: The tool is placed at the location, the robot's hand becomes empty, and the robot is no longer equipped with the tool.",
+#            "clean_up": "The 'clean_up' action has 2 parameters: a robot and an object. Preconditions: The robot must be a valid robot, and the object must be sliced. Effects: The object is no longer fixtured, and the robot's hand remains empty.",
+#            "serve_food": "The 'serve_food' action has 3 parameters: a robot, an object, and a location. Preconditions: The robot must be a valid robot with an empty hand, the object must be sliced and not fixtured, and the robot must be able to reach the object. Effects: The object is served at the specified location."
+#        }
+        explanations = {
+            "scan(<robot>, <obj>, <loc>)": "The 'scan' action has 3 parameters: a robot, an object, and a location. As preconditions, the robot must be a valid robot with an empty hand, the object should be a valid physical object located at the specified location, and the object must not already be registered by the robot. As effects, after executing this action, the object becomes registered by the robot.",
+            "pick(<robot>, <obj>, <loc>)": "The 'pick' action has 3 parameters: a robot, an object, and a location. As preconditions, the robot must be a valid robot with an empty hand, the object should be a valid physical object registered to the robot and located at the specified location, and the robot must be able to reach the object. As effects, the robot starts grasping the object, the robot's hand is no longer empty, and the object is no longer at the location.",
+            "place(<robot>, <obj>, <loc>)": "The 'place' action has 3 parameters: a robot, an object, and a location. As preconditions, the robot must be a valid robot grasping an object, with the object not at the specified location, and the robot must be able to reach the object. As effects, the object is placed at the location, the robot stops grasping the object, the robot's hand becomes empty, and the object is no longer registered by the robot.",
+            "equip_tool(<robot>, <tool>, <loc>, <obj>)": "The 'equip_tool' action has 4 parameters: a robot, a tool, a tool holder location, and an object. As preconditions, the robot must be a valid robot with an empty hand, the tool must be at the tool holder location, and the object is fixtured. The robot must be able to reach the tool. As effects, the robot becomes equipped with the tool, the tool is no longer at the location, and the robot's hand is no longer empty.",
+            "fixture(<robot>, <obj>, <loc>)": "The 'fixture' action has 3 parameters: a robot, an object, and a workspace location. As preconditions, the robot must be a valid robot with an empty hand, the object must be at the location, and the location must be a workspace. The robot must be able to reach the object. As effects, the object becomes fixtured, and the robot's hand is no longer empty.",
+            "slice(<robot>, <tool>, <obj>, <loc>)": "The 'slice' action has 4 parameters: a robot, a tool, an object, and a workspace location. As preconditions, the robot must be equipped with the tool, and the object must be fixtured and located at a workspace. As effects, the object becomes sliced, and it is no longer registered by the robot.",
+            "unequip_tool(<robot>, <tool>, <loc>)": "The 'unequip_tool' action has 3 parameters: a robot, a tool, and a tool holder location. As preconditions, the robot must be a valid robot equipped with a tool, and there must be a tool holder at the location for the tool. As effects, the tool is placed at the location, the robot's hand becomes empty, and the robot is no longer equipped with the tool.",
+            "clean_up(<robot>, <obj>)": "The 'clean_up' action has 2 parameters: a robot and an object. As preconditions: The robot must be a valid robot, and the object must be sliced. As effects, the object is no longer fixtured, and the robot's hand remains empty.",
+            "serve_food(<robot>, <obj>, <loc>)": "The 'serve_food' action has 3 parameters: a robot, an object, and a location. As preconditions, the robot must be a valid robot with an empty hand, the object must be sliced and not fixtured, and the robot must be able to reach the object. As effects, the object is served at the specified location."
+        }
+
+    return explanations
