@@ -9,9 +9,7 @@ from vilain_utils import get_action_explanations
 
 def create_prompt_for_object_detection(domain: str):
     objects = get_object_list(domain)
-
-#    prompt = f"""
-#Detect objects and output the bounding boxes in the form of [xmin, ymin, xmax, ymax]. The objects to detect are:\n{objects_str}. Output the results in JSON format where the key is an object name in string and the value is the bounding box (e.g., {{ "cucumber": [x1, y1, x2, y2], "plate": [x1, y1, x2, y2], ...}}). If multiple objects are detected for a single object type, add a number to the object name incrementally from the second object (e.g., plate, plate2, plate3, ...). Objects that do not appear in the image must not be included in the output.
+#    prompt = f""" #Detect objects and output the bounding boxes in the form of [xmin, ymin, xmax, ymax]. The objects to detect are:\n{objects_str}. Output the results in JSON format where the key is an object name in string and the value is the bounding box (e.g., {{ "cucumber": [x1, y1, x2, y2], "plate": [x1, y1, x2, y2], ...}}). If multiple objects are detected for a single object type, add a number to the object name incrementally from the second object (e.g., plate, plate2, plate3, ...). Objects that do not appear in the image must not be included in the output.
 #""".strip()
     prompt = f"""
 Given an image showing a robotic experiment environment, detect the following objects:\n{objects}\nOutput the bounding boxes for the objects in the form of [xmin, ymin, xmax, ymax].
@@ -186,23 +184,28 @@ def create_prompt_for_task_planning(
 
 #{action_explanations}
     prompt = f"""
-You are an agent for robot task planning. You are expected to write a task plan that are a sequence of actions. The following is provided as input: A scene observation of image, objects with types appeared in the environment, bounding boxes for the objects, and an instruction that specifies the goal. Available actions are defined as:
-{convert_actions(pddl_domain)}
+You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
 
-The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates. The predicates are defined as:
-{convert_predicates(pddl_domain)}
+Now the instruction is: 
+{instruction}
 
 The objects are:
 {pddl_problem_obj_str}
 
-Bounding boxes are:
+The locations of the objects by bounding boxes are:
 {convert_bboxes(bboxes)}
 
-Instruction is:
-{instruction}
+Available actions are defined as:
+{convert_actions(pddl_domain)}
 
-Output the task plan completes the given instruction by using the actions defined above. The output must be a list of actions in JSON format without further explanation. Actions must include their arguments and Arguments must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
+The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
+{convert_predicates(pddl_domain)}
+
+Output the plan of actions in JSON format without further explanation. The output must be a list of actions, and the action parameters are selected from the objects. Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
 """.strip()
+
+#The actions are represented in the form of 'action_name(parameter1, parameter2, ...)', and the parameters are selected from the objects (e.g., "pick(robot, tomato, tray)").
+#Output the task plan without further explanation. Actions must be with parameters, and the parameters must be the above objects. The output must be a list of actions in JSON format, and each action must be in string (e.g., "pick(robot, tomato, plate)").
 #Output the task plan completes the given instruction by using the actions defined above. The output must be a list of actions in JSON format (e.g., ["pick(...)", ...]) without further explanation.
 #    prompt = f"""
 #Generate a sequence of actions that accomplishes the following goal:
@@ -241,20 +244,22 @@ def create_prompt_for_task_plan_revision(
 
 #{action_explanations}
     prompt_1 = f"""
-You are an agent for robot task planning. You are expected to write a task plan that are a sequence of actions. The following is provided as input: A scene observation of image, objects with types appeared in the environment, bounding boxes for the objects, and an instruction that specifies the goal. Available actions are defined as:
-{convert_predicates(pddl_domain)}
+You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
 
-The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates. The predicates are defined as:
-{convert_actions(pddl_domain)}
+Now the instruction is: 
+{instruction}
 
 The objects are:
 {pddl_problem_obj_str}
 
-Bounding boxes are:
+The locations of the objects by bounding boxes are:
 {convert_bboxes(bboxes)}
 
-Instruction is:
-{instruction}
+Available actions are defined as:
+{convert_actions(pddl_domain)}
+
+The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
+{convert_predicates(pddl_domain)}
 
 For the above inputs, you generated the following actions:
 {actions}
