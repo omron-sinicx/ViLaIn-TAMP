@@ -2,6 +2,7 @@
 
 import json
 import base64
+import os
 from typing import List, Tuple, Dict
 from io import BytesIO
 from PIL import Image
@@ -11,6 +12,11 @@ from vilain_utils import PDDLProblem, PDDLDomain
 from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments
 from prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
 from prompts import create_prompt_for_PD_revision, create_prompt_for_task_planning, create_prompt_for_task_plan_revision
+
+
+def get_project_root():
+    """Get absolute path to project root directory."""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class ViLaIn:
@@ -435,7 +441,7 @@ if __name__ == "__main__":
     #task = "object_collision"
 
     # PDDL domain and problems
-    pddl_domain_str = open(f"{data_dir}/domain.pddl").read()
+    pddl_domain_str = open(os.path.join(data_dir, "..", "domain.pddl")).read()
 
     pddl_problem_strs = [
         #open(f"{data_dir}/{task}/problems/problem{i}.pddl").read()
@@ -741,6 +747,11 @@ if __name__ == "__main__":
 #    print("The revised PD (2nd):\n", result["result"])
 #    print()
 
+   mtc_trace = """
+1) scan b_bot cucumber tray
+2) pick b_bot cucumber tray
+3) place b_bot cucumber cutting_board [FAILURE]
+""".strip()
 
     # test task plan generation
     for i in range(1):
