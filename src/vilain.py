@@ -486,6 +486,7 @@ if __name__ == "__main__":
     # create a model 
     # use GPT
     model = "gpt-4o-2024-11-20"
+    #model="o1-2024-12-17"
     model_args = None
 
     # use Qwen-Coder
@@ -496,12 +497,12 @@ if __name__ == "__main__":
 #    }
 
     # use Qwen-VL
-    model = "Qwen/Qwen2.5-VL-7B-Instruct"
-
-    model_args = {
-        "base_url": "http://localhost:33333/v1",
-        "api_key": "qwen-2-5-vl-7b-instruct",
-    }
+#    model = "Qwen/Qwen2.5-VL-7B-Instruct"
+#
+#    model_args = {
+#        "base_url": "http://localhost:33333/v1",
+#        "api_key": "qwen-2-5-vl-7b-instruct",
+#    }
 
     #model="o1-2024-12-17"
     detection_model = "Qwen/Qwen2.5-VL-7B-Instruct"
