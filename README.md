@@ -10,6 +10,20 @@ Development of Vision-Language Interpreter (ViLaIn) for Integrated Task and Moti
 - `prompts`: prompt templates
 
 
+## Installation
+
+### SAM2
+Install sam2 and download checkpoints & configs as follows:
+```
+git clone https://github.com/facebookresearch/sam2.git && cd sam2
+pip install -e .
+cd sam2
+mkdir -p configs/sam2.1
+wget https://github.com/facebookresearch/sam2/blob/main/sam2/configs/sam2.1/sam2.1_hiera_l.yaml -O configs/sam2.1/sam2.1_hiera_l.yaml
+cd checkpoints
+bash download_ckpts.sh
+```
+
 
 ## Citations
 ```
