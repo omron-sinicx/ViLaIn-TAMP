@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict
 from io import BytesIO
 from PIL import Image
 from openai import OpenAI
+import requests
 
 from vilain_utils import PDDLProblem, PDDLDomain
 from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments
@@ -61,9 +62,17 @@ class ViLaIn:
 #            ]
 #        )
 
-        completion = self.client.chat.completions.create(**inputs)
+#        completion = self.client.chat.completions.create(**inputs)
+#        output = completion.choices[0].message.content
 
-        output = completion.choices[0].message.content
+        if any(self.model.startswith(m) for m in ("gpt-4o", "o1", "o3")):
+            #TODO
+            PROXY_URL = "http://10.3.162.56:11111/proxy-openai/"
+            response = requests.post(PROXY_URL, json=inputs)
+            output = json.loads(response.json())["choices"][0]["message"]["content"]
+        else:
+            completion = self.client.chat.completions.create(**inputs)
+            output = completion.choices[0].message.content
 
         return output
     
