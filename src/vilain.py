@@ -234,6 +234,8 @@ class ViLaIn:
                 output = self.generate(content)
                 result = extract_pddl(output, "goal")
 
+                result = result.replace("(and", "\n(and\n", 1).replace(")", ")\n") #TODO
+
                 success = True
             except Exception as e:
                 result = f"The generation failed due to the following error:\n{e}"
