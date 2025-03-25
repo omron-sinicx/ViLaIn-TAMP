@@ -2,9 +2,8 @@
 
 from typing import List, Tuple, Dict
 
-from vilain_utils import PDDLDomain
-from vilain_utils import convert_predicates, convert_actions, convert_bboxes, get_object_list
-from vilain_utils import get_action_explanations
+from vilain.vilain_utils import PDDLDomain
+from vilain.vilain_utils import convert_predicates, convert_actions, convert_bboxes, get_action_explanations, get_object_list
 
 
 def create_prompt_for_object_detection(domain: str):
