@@ -1,6 +1,6 @@
 ;Header and description
 
-(define (domain cooking_dual_arm)
+(define (domain cooking)
 
     ;remove requirements that are not needed
     (:requirements :strips :equality)
@@ -9,32 +9,31 @@
         ; Static predicates
 
         ; Type predicates
-        (Robot ?x) ; true if x is a robot
-        (PhysicalObject ?x) ; true if x is a physical object (e.g., cucumber, tomato)
-        (Tool ?x) ; true if x is a tool (e.g., knife)
-        (Location ?x) ; true if x is a location (e.g., tray, cutting_board)
-        (ToolHolder ?x) ; true if x is a tool holder (e.g., knife holder)
+        (Robot ?robot) ; This predicate is used to declare that something is a robot
+        (PhysicalObject ?obj) ; This predicate is used to declare that something is a physical object, like a vegetable or fruit
+        (Tool ?tool) ; This predicate is used to declare that something is a tool
+        (Location ?loc) ; This predicate is used to declare that something is a location
+        (ToolHolder ?loc) ; This predicate is used to declare that a location is a tool holder
 
-        (isWorkspace ?loc) ; Is the location a workspace? (In this context, workspace refers to the location to slice = cutting_board)
-        (Registered ?robot ?obj); The actual location and pose of the object is KNOWN
+        (isWorkspace ?loc) ; In cooking, the workspace is where slicing occurs, which is the cutting board
+        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action
 
         ; Robot state predicates
-        (HandEmpty ?robot) ; Is the robot hand free?
-        (Equipped ?robot ?tool) ; Is the robot equipped with a tool (e.g., knife)?
+        (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
+        (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
         ;Robot motion constraints
-        (CanNotReach ?robot ?obj) ; Can the robot reach the object? (True if robot cannot)
-
-        ; Goal related predicates
-        (Grasping ?robot ?obj) ; Is the robot grasping an object?
+        (CanNotReach ?robot ?obj) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures
 
         ; Object state
-        (isFixtured ?obj) ; Is the object held down (fixtured)?
-        (isSliced ?obj) ; Is the cucumber sliced or whole?
+        (isFixtured ?obj) ; This predicate is used as an effect of the "fixture" action
+        (isSliced ?obj) ; This predicate is used as an effect of the "slice" action
 
-        (At ?obj ?loc) ; Is the object at a specific location (e.g., tray, cutting_board)
+        (At ?obj ?loc) ; IThis predicate is used to declare that an object or tool is at a specific location
 
-        (Served ?obj ?loc) ; Is the object served at a location?
+        (Served ?obj ?loc) ; This predicate is used as an effect of the "serve_food" action
+
+        (isNotFree ?loc) ; This predicate is used if a location is currently occupied with an object (i.e., an object is at that location)
     )
 
     ; SCAN: Look for objects in the tray
@@ -66,9 +65,11 @@
             (HandEmpty ?robot)
         )
         :effect (and
-            (Grasping ?robot ?obj)
+            
             (not (HandEmpty ?robot))
-            (not (At ?obj ?loc)))
+            (not (At ?obj ?loc))
+            (not (isNotFree ?loc))
+        )
     )
 
     ; PLACE: Place an object
@@ -78,16 +79,17 @@
             (Robot ?robot)
             (PhysicalObject ?obj)
             (Location ?loc)
-            (Grasping ?robot ?obj)
+            
             (not (HandEmpty ?robot))
             (not (At ?obj ?loc))
             (not (CanNotReach ?robot ?obj))
+            (not (isNotFree ?loc))
         )
         :effect (and
             (At ?obj ?loc)
-            (not (Grasping ?robot ?obj))
             (HandEmpty ?robot)
             (not (Registered ?robot ?obj))
+            (isNotFree ?loc)
         )
     )
 
@@ -120,6 +122,7 @@
             (HandEmpty ?robot)
             (not (CanNotReach ?robot ?obj))
             (isWorkspace ?loc)
+            (isNotFree ?loc)
         )
         :effect (and
             (not (HandEmpty ?robot))
@@ -178,18 +181,22 @@
 
     ;SERVE_FOOD: Repeated pick-and-place actions for serving slices onto a location (e.g., plate)
     (:action serve_food
-        :parameters (?robot ?obj ?loc)
+        :parameters (?robot ?obj ?loc1 ?loc2)
         :precondition (and
             (Robot ?robot)
             (PhysicalObject ?obj)
-            (Location ?loc)
+            (Location ?loc1)
+            (isWorkspace ?loc1)
+            (Location ?loc2)
             (isSliced ?obj)
             (not (isFixtured ?obj))
             (HandEmpty ?robot)
             (not (CanNotReach ?robot ?obj))
         )
         :effect (and
-            (Served ?obj ?loc)
+            (Served ?obj ?loc2)
+            (not (At ?obj ?loc1))
+            (not (isNotFree ?loc1))
         )
     )
 
