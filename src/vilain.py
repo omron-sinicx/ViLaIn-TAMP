@@ -243,7 +243,9 @@ class ViLaIn:
                 output = self.generate(content)
                 result = extract_pddl(output, "goal")
 
-                result = result.replace("(and", "\n(and\n", 1).replace(")", ")\n") #TODO
+                #TODO
+                result = result.replace("(and", "\n(and\n", 1).replace(")", ")\n") 
+                result = re.sub(r"^\s*\n", "", result, flags=re.MULTILINE)
 
                 success = True
             except Exception as e:
