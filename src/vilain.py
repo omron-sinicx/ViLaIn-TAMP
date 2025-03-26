@@ -9,7 +9,7 @@ from openai import OpenAI
 import requests
 
 from vilain_utils import PDDLProblem, PDDLDomain
-from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments
+from vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments, collect_predicates
 from prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
 from prompts import create_prompt_for_PD_revision, create_prompt_for_task_planning, create_prompt_for_task_plan_revision
 
@@ -193,7 +193,11 @@ class ViLaIn:
                     }]
 
                 output = self.generate(content)
-                result = extract_pddl(output, "init")
+                pddl_output = extract_pddl(output, "init")
+
+                #TODO
+                preds = collect_predicates(pddl_output, "init")
+                result = "(:init\n" + "\n".join([ " " * 4 + p for p in preds ]) + "\n)"
 
                 success = True
             except Exception as e:
@@ -241,11 +245,11 @@ class ViLaIn:
                 }]
 
                 output = self.generate(content)
-                result = extract_pddl(output, "goal")
+                pddl_output = extract_pddl(output, "goal")
 
                 #TODO
-                result = result.replace("(and", "\n(and\n", 1).replace(")", ")\n") 
-                result = re.sub(r"^\s*\n", "", result, flags=re.MULTILINE)
+                preds = collect_predicates(pddl_output, "goal")
+                result = "(:goal\n    (and\n" + "\n".join([ " " * 8 + p for p in preds ]) + "\n    )\n)"
 
                 success = True
             except Exception as e:

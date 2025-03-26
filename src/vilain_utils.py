@@ -531,6 +531,41 @@ def remove_comments(pddl: str):
     return new_pddl
 
 
+def collect_predicates(
+    output: str,
+    part: str="init", # 'init' or 'goal'
+):
+    output = remove_comments(output)
+
+    if part == "init":
+        start_idx = output.index("(:init") + 1
+    elif part == "goal":
+        start_idx = output.index("(and") + 1
+    else:
+        raise Exception()
+
+    result = []
+    buff = ""
+    stack = 0
+
+    for i in range(start_idx, len(output)):
+        if output[i] == "(":
+            stack += 1
+        elif output[i] == ")":
+            stack -= 1
+
+        if stack >= 1:
+            buff += output[i]
+        elif stack <= 0:
+            if len(buff) > 0:
+                buff += output[i]
+                result += [buff[::]]
+
+            buff = ""
+
+    return result
+
+
 def get_action_explanations(domain: str="cooking"):
     if domain == "cooking":
 #        explanations = {
