@@ -2,18 +2,15 @@
 
 import json
 import base64
+from typing import List, Tuple, Dict
+from io import BytesIO
 from PIL import Image
 from openai import OpenAI
-from typing import Dict, List, Tuple, Optional
-from io import BytesIO
-import rospy
+import requests
 
 from vilain.vilain_utils import PDDLProblem, PDDLDomain
-from vilain.vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments
-# from vilain.prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
+from vilain.vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments, collect_predicates
 from vilain.prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
-# from vilain.prompts import create_prompt_for_revision, create_prompt_for_object_detection
-
 from vilain.prompts import create_prompt_for_PD_revision, create_prompt_for_task_planning, create_prompt_for_task_plan_revision
 
 
@@ -37,85 +34,6 @@ class ViLaIn:
 
         if detection_args and detection_model:
             self.client_for_detection = OpenAI(**detection_args)
-
-        # Add the dummy objects definition as a class variable
-        self.objects_dummy_output = """(:objects
-        a_bot b_bot - Robot
-        cucumber - PhysicalObject
-        knife - Tool
-        cutting_board bowl tray knife_holder - Location
-    )"""
-
-        # Add the dummy initial state as a class variable
-        self.init_dummy_output = """(:init
-        (Robot b_bot)
-        (Robot a_bot)
-        (PhysicalObject cucumber)
-        (Tool knife)
-
-        (HandEmpty a_bot)
-        (HandEmpty b_bot)
-
-        (Location cutting_board)
-        (Location tray)
-        (Location knife_holder)
-        (Location bowl)
-
-        (ToolHolder knife_holder)
-
-        (isWorkspace cutting_board)
-
-        ; (At knife knife_holder
-        (At cucumber tray)
-    )"""
-
-        # Add the dummy goal conditions as a class variable
-        self.goal_dummy_output = """(:goal
-        (and
-            (Served cucumber bowl)
-            (isSliced cucumber)
-            ; (At cucumber cutting_board)
-        )"""
-
-        # Add the dummy revised PDDL problem as a class variable
-        self.revised_pd_dummy_output = """(define (problem cooking)
-    (:domain cooking)
-    (:objects
-        a_bot b_bot - Robot
-        cucumber - PhysicalObject
-        knife - Tool
-        cutting_board bowl tray knife_holder - Location
-    )
-
-    (:init
-        (Robot b_bot)
-        (Robot a_bot)
-        (PhysicalObject cucumber)
-        (Tool knife)
-
-        (HandEmpty a_bot)
-        (HandEmpty b_bot)
-
-        (Location cutting_board)
-        (Location tray)
-        (Location knife_holder)
-        (Location bowl)
-
-        (ToolHolder knife_holder)
-
-
-        (isWorkspace cutting_board)
-
-        (At knife knife_holder)
-        (At cucumber tray)
-    )
-
-    (:goal
-        (and
-            (Served cucumber bowl)
-            (isSliced cucumber) ; revision
-        )
-    ))"""
 
     def generate(
         self,
@@ -144,9 +62,17 @@ class ViLaIn:
 #            ]
 #        )
 
-        completion = self.client.chat.completions.create(**inputs)
+#        completion = self.client.chat.completions.create(**inputs)
+#        output = completion.choices[0].message.content
 
-        output = completion.choices[0].message.content
+        if any(self.model.startswith(m) for m in ("gpt-4o", "o1", "o3")):
+            #TODO
+            PROXY_URL = "http://10.3.162.56:11111/proxy-openai/"
+            response = requests.post(PROXY_URL, json=inputs)
+            output = json.loads(response.json())["choices"][0]["message"]["content"]
+        else:
+            completion = self.client.chat.completions.create(**inputs)
+            output = completion.choices[0].message.content
 
         return output
     
@@ -156,15 +82,7 @@ class ViLaIn:
         fixed_bboxes: List[Tuple[str, List[float]]], # object labels and their bounding boxes in [0, 1] for fixed objects
         domain: str="cooking", # domain 
         size: Tuple[int, int]=(640, 640), # resize image to (width, height)
-        dummy_output: bool = False,
     ):
-
-        if dummy_output:
-            return {
-                "result": self.objects_dummy_output,
-                "prompt": create_prompt_for_object_detection(domain),
-                "bboxes": [],
-            }
         if not self.client_for_detection:
             return {
                 "result": "To perform object detection, please specify detection_args and " + \
@@ -247,19 +165,7 @@ class ViLaIn:
         image: str, # a decoded base64 image (e.g., base64.b64encode(open(path, "rb").read()).decode("utf-8")
         examples: List=[], # in-context examples
         without_comments: bool=False, # if true, remove commnets in PDDL domain
-        dummy_output: bool=False,
     ):
-
-        if dummy_output:
-            return {
-                "result": self.init_dummy_output,
-                "prompt": create_prompt_for_initial_state(
-                    pddl_domain_str,
-                    pddl_problem_obj_str,
-                    bboxes,
-                    examples,
-                ),
-            }
         success = False
         count = 0 # in case the output format is wrong
 
@@ -287,7 +193,11 @@ class ViLaIn:
                     }]
 
                 output = self.generate(content)
-                result = extract_pddl(output, "init")
+                pddl_output = extract_pddl(output, "init")
+
+                #TODO
+                preds = collect_predicates(pddl_output, "init")
+                result = "(:init\n" + "\n".join([ " " * 4 + p for p in preds ]) + "\n)"
 
                 success = True
             except Exception as e:
@@ -312,22 +222,9 @@ class ViLaIn:
         instruction: str, # a linguistic instruction
         examples: List=[], # in-context examples
         without_comments: bool=False, # if true, remove commnets in PDDL domain
-        dummy_output: bool=False,
     ):
         success = False
         count = 0 # in case the output format is wrong
-
-        if dummy_output:
-            return {
-                "result": self.goal_dummy_output,
-                "prompt": create_prompt_for_goal_conditions(
-                    pddl_domain_str,
-                    pddl_problem_obj_str,
-                    pddl_problem_init_str,
-                    instruction,
-                    examples,
-                ),
-            }
 
         while count < 5:
             try:
@@ -348,7 +245,11 @@ class ViLaIn:
                 }]
 
                 output = self.generate(content)
-                result = extract_pddl(output, "goal")
+                pddl_output = extract_pddl(output, "goal")
+
+                #TODO
+                preds = collect_predicates(pddl_output, "goal")
+                result = "(:goal\n    (and\n" + "\n".join([ " " * 8 + p for p in preds ]) + "\n    )\n)"
 
                 success = True
             except Exception as e:
@@ -375,23 +276,9 @@ class ViLaIn:
         prev_feedbacks: List[str], # a list of previously provided feedbacks
         prev_revisions: List[str], # a list of previously revised PDDL problems
         without_comments: bool=False, # if true, remove commnets in PDDL domain
-        dummy_output: bool=False
     ):
         success = False
         count = 0 # in case the output format is wrong
-
-        if dummy_output:
-            return {
-                "result": self.revised_pd_dummy_output,     
-                "prompt": create_prompt_for_revision(
-                    pddl_domain_str,
-                    pddl_problem_str,
-                    instruction,
-                    feedback,
-                    prev_feedbacks,
-                    prev_revisions,
-                ),
-            }
 
         while count < 5:
             try:
