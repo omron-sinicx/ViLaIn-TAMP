@@ -9,31 +9,32 @@
         ; Static predicates
 
         ; Type predicates
-        (Robot ?robot) ; This predicate is used to declare that something is a robot
-        (PhysicalObject ?obj) ; This predicate is used to declare that something is a physical object, like a vegetable or fruit
-        (Tool ?tool) ; This predicate is used to declare that something is a tool
-        (Location ?loc) ; This predicate is used to declare that something is a location
-        (ToolHolder ?loc) ; This predicate is used to declare that a location is a tool holder
+        (Robot ?x) ; This is predicate is used to declare that something is a robot
+        (PhysicalObject ?x) ; This predicate is used to declare that something is a physical object, like a vegetable or fruit
+        (Tool ?x) ; This predicate is used to declare that something is a tool (e.g., knife)
+        (Location ?x) ; This predicate is used to declare that something is a location (e.g., tray, cutting_board)
+        (ToolHolder ?x) ; This predicate is used to declare that a location is a tool holder (e.g., knife holder)
 
-        (isWorkspace ?loc) ; In cooking, the workspace is where slicing occurs, which is the cutting board
-        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action
+        (isWorkspace ?loc) ; This predicate is used to declare that a location is a workspace (e.g., in cooking, the workspace is the cutting board)
+        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action and declare that an object's pose is now known
 
-        ; Robot state predicates
         (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
         (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
-        ;Robot motion constraints
         (CanNotReach ?robot ?obj) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures
 
+        ; Goal related predicates
+        (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is grasping an object
+
         ; Object state
-        (isFixtured ?obj) ; This predicate is used as an effect of the "fixture" action
-        (isSliced ?obj) ; This predicate is used as an effect of the "slice" action
+        (isFixtured ?obj) ; This predicate is used to declare that an object is held down (fixtured). It is the effect of the "fixture" action
+        (isSliced ?obj) ; This predicate is used to declare that an object has been sliced. It is the effect of the "slice" action
 
-        (At ?obj ?loc) ; IThis predicate is used to declare that an object or tool is at a specific location
+        (At ?obj ?loc) ; This predicate is used to declare that an object is at a specific location
 
-        (Served ?obj ?loc) ; This predicate is used as an effect of the "serve_food" action
+        (Served ?obj ?loc) ; This predicate is used to declare that an object has been served at a specific location
 
-        (isNotFree ?loc) ; This predicate is used if a location is currently occupied with an object (i.e., an object is at that location)
+        (isNotFree ?loc) ; This predicate is used to declare that a location is not free and occupied by an object
     )
 
     ; SCAN: Look for objects in the tray
@@ -65,7 +66,7 @@
             (HandEmpty ?robot)
         )
         :effect (and
-            
+            (Grasping ?robot ?obj)
             (not (HandEmpty ?robot))
             (not (At ?obj ?loc))
             (not (isNotFree ?loc))
@@ -79,7 +80,7 @@
             (Robot ?robot)
             (PhysicalObject ?obj)
             (Location ?loc)
-            
+            (Grasping ?robot ?obj)
             (not (HandEmpty ?robot))
             (not (At ?obj ?loc))
             (not (CanNotReach ?robot ?obj))
@@ -87,6 +88,7 @@
         )
         :effect (and
             (At ?obj ?loc)
+            (not (Grasping ?robot ?obj))
             (HandEmpty ?robot)
             (not (Registered ?robot ?obj))
             (isNotFree ?loc)
@@ -145,7 +147,6 @@
         )
         :effect (and
             (isSliced ?obj)
-            (not (Registered ?robot ?obj))
         )
     )
 
