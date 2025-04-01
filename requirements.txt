@@ -1,3 +1,4 @@
 sam-2
 supervision
 openai
+requests
