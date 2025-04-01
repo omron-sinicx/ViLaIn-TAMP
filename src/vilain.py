@@ -453,12 +453,14 @@ if __name__ == "__main__":
     ## prepare inputs
     import json
 
-    data_dir = "./data/vilain_tamp_data/cooking"
     task = "slicing"
-    #task = "object_collision"
+
+    # Get project root directory and data paths
+    project_root = get_project_root()
+    data_dir = os.path.join(project_root, "data", "vilain_tamp_data", "cooking")  
 
     # PDDL domain and problems
-    pddl_domain_str = open(os.path.join(data_dir, "..", "domain.pddl")).read()
+    pddl_domain_str = open(os.path.join(data_dir, "domain.pddl")).read()  # Remove ".."
 
     pddl_problem_strs = [
         #open(f"{data_dir}/{task}/problems/problem{i}.pddl").read()
@@ -765,11 +767,11 @@ if __name__ == "__main__":
 #    print("The revised PD (2nd):\n", result["result"])
 #    print()
 
-   mtc_trace = """
+    mtc_trace = """
 1) scan b_bot cucumber tray
 2) pick b_bot cucumber tray
 3) place b_bot cucumber cutting_board [FAILURE]
-""".strip()
+    """
 
     # test task plan generation
     for i in range(1):
@@ -785,7 +787,6 @@ if __name__ == "__main__":
         print("prompt:\n", result["prompt"])
         print("The generated task plan:\n", result["result"])
         print()
-
 
         # test task plan generation with a crafted feedback
         feedback = "The generated task plan does not have a valid solution."
