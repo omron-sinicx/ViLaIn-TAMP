@@ -30,6 +30,11 @@
         (At knife knife_holder)
         (At carrot plate)
         (At cucumber plate2)
+
+        (isNotFree plate)
+        (isNotFree plate2)
+        (isNotFree tray)
+        (isNotFree knife_holder)
     )
 
     (:goal

@@ -29,12 +29,14 @@
         (At knife knife_holder)
         (At cucumber tray)
         (At apple plate)
+
+        (isNotFree plate)
     )
 
     (:goal
         (and
             (At cucumber plate)
-            (At apple tray)
+            (At apple cutting_board)
         )
     )
 )
