@@ -10,7 +10,7 @@ import rospy
 import requests
 
 from vilain.vilain_utils import PDDLProblem, PDDLDomain
-from vilain.vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments
+from vilain.vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments, collect_predicates
 # from vilain.prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
 from vilain.prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
 # from vilain.prompts import create_prompt_for_revision, create_prompt_for_object_detection
@@ -51,7 +51,7 @@ class ViLaIn:
         self.init_dummy_output = """(:init
         (Robot b_bot)
         (Robot a_bot)
-        (PhysicalObject cucumber)
+        (PhysicalObject cucumber1)
         (Tool knife)
 
         (HandEmpty a_bot)
@@ -67,15 +67,15 @@ class ViLaIn:
         (isWorkspace cutting_board)
 
         ; (At knife knife_holder
-        (At cucumber tray)
+        (At cucumber1 tray)
     )"""
 
         # Add the dummy goal conditions as a class variable
         self.goal_dummy_output = """(:goal
         (and
-            (Served cucumber bowl)
-            (isSliced cucumber)
-            ; (At cucumber cutting_board)
+            (Served cucumber1 bowl)
+            (isSliced cucumber1)
+            ; (At cucumber1 cutting_board)
         )"""
 
         # Add the dummy revised PDDL problem as a class variable
@@ -100,7 +100,7 @@ class ViLaIn:
         (Location cutting_board)
         (Location tray)
         (Location knife_holder)
-        (Location bowl)
+        (Location mattress)
 
         (ToolHolder knife_holder)
 
@@ -113,7 +113,7 @@ class ViLaIn:
 
     (:goal
         (and
-            (Served cucumber bowl)
+            (Served cucumber mattress)
             (isSliced cucumber) ; revision
         )
     ))"""
@@ -404,7 +404,7 @@ class ViLaIn:
         if dummy_output:
             return {
                 "result": self.revised_pd_dummy_output,     
-                "prompt": create_prompt_for_revision(
+                "prompt": create_prompt_for_PD_revision(
                     pddl_domain_str,
                     pddl_problem_str,
                     instruction,
