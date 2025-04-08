@@ -9,11 +9,8 @@ from io import BytesIO
 import requests
 
 from vilain.vilain_utils import PDDLProblem, PDDLDomain
-from vilain.vilain_utils import extract_pddl, process_bboxes, create_pddl_objects, remove_comments, collect_predicates
-# from vilain.prompts import create_prompt_for_initial_state, create_prompt_for_goal_conditions
+from vilain.vilain_utils import extract_pddl, extract_json, process_bboxes, create_pddl_objects, remove_comments, collect_predicates
 from vilain.prompts import create_prompt_for_object_detection, create_prompt_for_initial_state, create_prompt_for_goal_conditions
-# from vilain.prompts import create_prompt_for_revision, create_prompt_for_object_detection
-
 from vilain.prompts import create_prompt_for_PD_revision, create_prompt_for_task_planning, create_prompt_for_task_plan_revision
 
 
