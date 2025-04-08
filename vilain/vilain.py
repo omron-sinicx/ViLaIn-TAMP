@@ -6,7 +6,6 @@ from PIL import Image
 from openai import OpenAI
 from typing import Dict, List, Tuple, Optional
 from io import BytesIO
-import rospy
 import requests
 
 from vilain.vilain_utils import PDDLProblem, PDDLDomain
