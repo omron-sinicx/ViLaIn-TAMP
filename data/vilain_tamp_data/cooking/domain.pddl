@@ -16,12 +16,12 @@
         (ToolHolder ?x) ; This predicate is used to declare that a location is a tool holder (e.g., knife holder)
 
         (isWorkspace ?loc) ; This predicate is used to declare that a location is a workspace (e.g., in cooking, the workspace is the cutting board)
-        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action and declare that an object's pose is now known
+        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action and can only be True if the scan action is executed
 
         (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
         (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
-        (CanNotReach ?robot ?obj) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures
+        (CanNotReach ?robot ?obj) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
 
         ; Goal related predicates
         (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is grasping an object
