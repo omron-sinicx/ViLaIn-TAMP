@@ -257,7 +257,7 @@ The locations of the objects by bounding boxes are:
 Available actions are defined as:
 {convert_actions(pddl_domain)}
 
-The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
+The actions have preconditions and effects that must be satisfied before and after an action. These are represented by predicates that are defined as:
 {convert_predicates(pddl_domain)}
 
 For the above inputs, you generated the following actions:
@@ -294,7 +294,7 @@ And you revised and generated the following actions:
 However, planning failed and returned the following feedback:
 {feedback}
 
-Based on the feedback, reivse and generate a seuqnece of actions without further explanation?
+Based on the feedback, revise and generate a sequence of actions without further explanation.
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
