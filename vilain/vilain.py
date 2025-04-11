@@ -518,6 +518,7 @@ class ViLaIn:
         prev_feedbacks: List[str], # a list of previously provided feedbacks
         prev_revisions: List[str], # a list of previously revised PDDL problems
         without_comments: bool=False, # if true, remove commnets in PDDL domain
+        dummy_output: bool=False,
     ):
         success = False
         count = 0 # in case the output format is wrong
