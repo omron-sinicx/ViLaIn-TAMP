@@ -21,10 +21,10 @@
         (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
         (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
-        (CanNotReach ?robot ?obj) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
+        (CanNotReach ?robot ?obj) ; This predicate is used to declare if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
 
         ; Goal related predicates
-        (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is grasping an object
+        (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is currently grasping an object
 
         ; Object state
         (isFixtured ?obj) ; This predicate is used to declare that an object is held down (fixtured). It is the effect of the "fixture" action

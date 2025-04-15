@@ -26,7 +26,9 @@ def create_prompt_for_initial_state(
     pddl_domain = PDDLDomain(pddl_domain_str)
 
     prompt1 = f"""
-You are an agent for robot task planning. Given a scene observation of image, objects with types appeared in the environment, and their locations by bounding boxes, you are expected to write the initial state of the environment as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. Negative predicates (e.g., (not (predicate ...)) do not appear in the initial state. Available predicates are defined as:
+You are an agent for robot task planning. 
+Given a scene observation of image, objects with types appeared in the environment, and their locations by bounding boxes, you are expected to write the initial state of the environment as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. Negative predicates (e.g., (not (predicate ...)) do not appear in the initial state. 
+Available predicates are defined as:
 {convert_predicates(pddl_domain)}
 """.strip()
 
@@ -57,7 +59,10 @@ Bounding boxes are:
 
 Could you write a set of predicates of the initial state for the given objects and locations? 
 Let's think step by step.
-3) The set of predicates are enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
+1) First, write a short summary of this Cooking domain in words.
+2) There is a simple strategy for solving the instruction in this domain without using search. What is that strategy?
+3) Now, write the initial state for the given objects and locations.
+The set of predicates are enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
 """.strip()
 
     return f"{prompt1}\n{prompt2}\n{prompt3}"
@@ -73,7 +78,11 @@ def create_prompt_for_goal_conditions(
     pddl_domain = PDDLDomain(pddl_domain_str)
 
     prompt1 = f"""
-You are an agent for robot task planning. Given a linguistic instruction specifying the task and objects with types appeared in the environment, you are expected to write the desired goal conditions as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. The predicates for the goal conditions should be predicates about target objects after completing the task. A predicate consists of a predicate name and its arguments, and written predicates are assumed to be true. Available predicates are defined as:
+You are an agent for robot task planning. 
+Given a linguistic instruction specifying the task and objects with types appeared in the environment, you are expected to write the desired goal conditions as a set of predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assumed to be true. 
+The predicates for the goal conditions should be predicates about target objects after completing the task. 
+A predicate consists of a predicate name and its arguments, and written predicates are assumed to be true. 
+Available predicates are defined as:
 {convert_predicates(pddl_domain)}
 """.strip()
 
@@ -110,6 +119,9 @@ The linguistic instruction is:
 
 Could you write a set of predicates of the goal conditions for the given instruction and objects? 
 Let's think step by step.
+1) First, write a short summary of this Cooking domain in words.
+2) There is a simple strategy for solving the instruction in this domain without using search. What is that strategy?
+3) Now, write the goal conditions for the given instruction and objects.
 The set of predicates are enclosed by '(:goal (and' and ')' so that '(:goal (and (predicate1 ...) (predicate2 ...) ...))'.
 """.strip()
 
@@ -127,10 +139,14 @@ def create_prompt_for_PD_revision(
     pddl_domain = PDDLDomain(pddl_domain_str)
 
     prompt_1 = f"""
-You are an agent for robot task planning. Given a linguistic instruction and a scene observation of image, you are expected to write a problem specification that consists of objects, the initial state of the environment, and the desired goal conditions. The initial state and the goal conditions are expressed by predicates. A predicate consists of a predicate name and its arguments, and all written predicates are assume to be true. Negative predicates (e.g., (not (predicate ...)) do not appear in the initial state. Avaiable predicates are defined as:
+You are an agent for robot task planning. 
+Given a linguistic instruction and a scene observation of image, you are expected to write a problem specification that consists of objects, the initial state of the environment, and the desired goal conditions. The initial state and the goal conditions are expressed by predicates. 
+A predicate consists of a predicate name and its arguments, and all written predicates are assume to be true. 
+Negative predicates (e.g., (not (predicate ...)) do not appear in the initial state. Available predicates are defined as:
 {convert_predicates(pddl_domain)}
 
-With the generated specification, task planner first finds a sequence of symbolic actions, and motion planner then finds a sequence of physical actions. The symbolic actions contain preconditions and effects that must be True before and after it is executed, respectively. The actions are defined as:
+With the generated specification, a task planner first finds a sequence of symbolic actions, and a motion planner then finds a sequence of physical actions. 
+The symbolic actions contain preconditions and effects that must be True before and after it is executed, respectively. The actions are defined as:
 {convert_actions(pddl_domain)}
 
 Now you are given the instruction and scene observation.
@@ -170,13 +186,13 @@ However, planning failed and returned the following feedback:
 We assume that planning failure occurs because the problem specification is incomplete. 
 Could you generate the revised specification?
 Let's think step by step.
-1) First, identify the error in the previous specification based on the feedback.
-2) Identify if the error is due to missing objects, incorrect initial state, or incorrect goal conditions.
-3) If the error is due to motion failure, revise the specification to fix the issue.
-4) If the error is due to missing objects, add the missing objects to the specification.
-5) If the error is due to incorrect initial state, revise the initial state to fix the issue.
-6) If the error is due to incorrect goal conditions, revise the goal conditions to fix the issue.
-7) The revised specification must be enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
+1) Based on the feedback, identify if the error is a task planning failure or a motion planning failure.
+2) If the error is due to task planning failure, revise the specification to fix the issue based on the task planning feedback.
+3) If the error is due to motion planning failure, identify the action that failed and the cause of the failure.
+4) Based on the cause of the failure (collisions, etc.), add or remove predicates to the specification to fix the issue.
+5) If the error is due to missing or non-existing objects, add or remove objects to the specification.
+
+The revised specification must be enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
