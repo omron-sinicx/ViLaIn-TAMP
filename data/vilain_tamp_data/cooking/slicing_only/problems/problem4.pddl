@@ -35,9 +35,6 @@
 
     (:goal
         (and
-            (Served cucumber bowl)
-            (Served apple bowl)
-            (isSliced cucumber)
             (isSliced apple)
         )
     )

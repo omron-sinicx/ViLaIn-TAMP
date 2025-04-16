@@ -27,6 +27,8 @@
         (isWorkspace cutting_board)
 
         (CanNotReach a_bot knife knife_holder)
+        (CanNotReach b_bot cucumber tray)
+        (CanNotReach b_bot apple tray)
 
         (At knife knife_holder)
         (At cucumber tray)
@@ -35,9 +37,6 @@
 
     (:goal
         (and
-            (Served cucumber bowl)
-            (Served apple bowl)
-            (isSliced cucumber)
             (isSliced apple)
         )
     )

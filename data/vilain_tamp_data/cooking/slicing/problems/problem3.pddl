@@ -25,8 +25,7 @@
 
         (isWorkspace cutting_board)
 
-        (CanNotReach a_bot knife)
-        (CanNotReach b_bot apple)
+        (CanNotReach a_bot knife knife_holder)
 
         (At knife knife_holder)
         (At apple tray)

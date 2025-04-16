@@ -25,8 +25,6 @@
 
         (isWorkspace cutting_board)
 
-        (CanNotReach a_bot knife)
-
         (At knife knife_holder)
         (At carrot tray)
         (At cucumber plate)

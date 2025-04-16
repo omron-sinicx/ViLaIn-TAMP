@@ -9,7 +9,6 @@
 
     (:init
         (Robot a_bot)
-        (Robot b_bot)
         (PhysicalObject apple)
         (PhysicalObject carrot)
         (Tool knife)
@@ -25,15 +24,9 @@
 
         (isWorkspace cutting_board)
 
-        (CanNotReach a_bot knife)
-
         (At knife knife_holder)
         (At apple tray)
         (At carrot plate)
-
-        (isNotFree plate)
-        (isNotFree tray)
-        (isNotFree knife_holder)
     )
 
     (:goal
