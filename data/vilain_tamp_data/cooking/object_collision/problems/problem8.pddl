@@ -27,6 +27,11 @@
         (At knife knife_holder)
         (At apple tray)
         (At carrot plate)
+
+        (isNotFree knife_holder)
+
+        (isNotFree plate)
+        (isNotFree tray)
     )
 
     (:goal
