@@ -16,17 +16,17 @@
         (ToolHolder ?x) ; This predicate is used to declare that a location is a tool holder (e.g., knife holder)
 
         (isWorkspace ?loc) ; This predicate is used to declare that a location is a workspace (e.g., in cooking, the workspace is the cutting board)
+        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action and can only be True if the scan action is executed
 
         (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
         (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
-        (CanNotReach ?robot ?obj ?loc) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
+        (CanNotReach ?robot ?obj) ; This predicate is used to declare if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
 
         ; Goal related predicates
-        (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is grasping an object
+        (Grasping ?robot ?obj) ; This predicate is used to declare that a robot is currently grasping an object
 
         ; Object state
-        (isFixturing ?robot ?obj) ; This predicate is used to declare that a robot is fixturing an object. It is the effect of the "fixture" action
         (isFixtured ?obj) ; This predicate is used to declare that an object is held down (fixtured). It is the effect of the "fixture" action
         (isSliced ?obj) ; This predicate is used to declare that an object has been sliced. It is the effect of the "slice" action
 
@@ -37,6 +37,22 @@
         (isNotFree ?loc) ; This predicate is used to declare that a location is not free and occupied by an object
     )
 
+    ; SCAN: Look for objects in the tray
+    (:action scan
+        :parameters (?robot ?obj ?loc)
+        :precondition (and
+            (Robot ?robot)
+            (PhysicalObject ?obj)
+            (Location ?loc)
+            (HandEmpty ?robot)
+            (At ?obj ?loc)
+            (not (Registered ?robot ?obj))
+        )
+        :effect (and
+            (Registered ?robot ?obj)
+        )
+    )
+
     ; PICK: Pick up an object
     (:action pick
         :parameters (?robot ?obj ?loc)
@@ -44,7 +60,8 @@
             (Robot ?robot)
             (PhysicalObject ?obj)
             (Location ?loc)
-            (not (CanNotReach ?robot ?obj ?loc))
+            (Registered ?robot ?obj)
+            (not (CanNotReach ?robot ?obj))
             (At ?obj ?loc)
             (HandEmpty ?robot)
         )
@@ -66,13 +83,14 @@
             (Grasping ?robot ?obj)
             (not (HandEmpty ?robot))
             (not (At ?obj ?loc))
-            (not (CanNotReach ?robot ?obj ?loc))
+            (not (CanNotReach ?robot ?obj))
             (not (isNotFree ?loc))
         )
         :effect (and
             (At ?obj ?loc)
             (not (Grasping ?robot ?obj))
             (HandEmpty ?robot)
+            (not (Registered ?robot ?obj))
             (isNotFree ?loc)
         )
     )
@@ -87,7 +105,7 @@
             (HandEmpty ?robot)
             (ToolHolder ?loc)
             (At ?tool ?loc)
-            (not (CanNotReach ?robot ?tool ?loc))
+            (not (CanNotReach ?robot ?tool))
         )
         :effect (and
             (Equipped ?robot ?tool)
@@ -104,13 +122,12 @@
             (PhysicalObject ?obj)
             (At ?obj ?loc)
             (HandEmpty ?robot)
-            (not (CanNotReach ?robot ?obj ?loc))
+            (not (CanNotReach ?robot ?obj))
             (isWorkspace ?loc)
             (isNotFree ?loc)
         )
         :effect (and
             (not (HandEmpty ?robot))
-            (isFixturing ?robot ?obj)
             (isFixtured ?obj)
         )
     )
@@ -156,10 +173,8 @@
             (Robot ?robot)
             (PhysicalObject ?obj)
             (isSliced ?obj)
-            (isFixturing ?robot ?obj)
         )
         :effect (and
-            (not (isFixturing ?robot ?obj))
             (not (isFixtured ?obj))
             (HandEmpty ?robot)
         )
@@ -177,8 +192,7 @@
             (isSliced ?obj)
             (not (isFixtured ?obj))
             (HandEmpty ?robot)
-            (not (CanNotReach ?robot ?obj ?loc1))
-            (not (CanNotReach ?robot ?obj ?loc2))
+            (not (CanNotReach ?robot ?obj))
         )
         :effect (and
             (Served ?obj ?loc2)
