@@ -60,8 +60,7 @@ Bounding boxes are:
 Could you write a set of predicates of the initial state for the given objects and locations? 
 Let's think step by step.
 1) First, write a short summary of this Cooking domain in words.
-2) There is a simple strategy for solving the instruction in this domain without using search. What is that strategy?
-3) Now, write the initial state for the given objects and locations.
+2) Now, write the initial state for the given objects and locations.
 The set of predicates are enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
 """.strip()
 
@@ -120,8 +119,7 @@ The linguistic instruction is:
 Could you write a set of predicates of the goal conditions for the given instruction and objects? 
 Let's think step by step.
 1) First, write a short summary of this Cooking domain in words.
-2) There is a simple strategy for solving the instruction in this domain without using search. What is that strategy?
-3) Now, write the goal conditions for the given instruction and objects.
+2) Now, write the goal conditions for the given instruction and objects.
 The set of predicates are enclosed by '(:goal (and' and ')' so that '(:goal (and (predicate1 ...) (predicate2 ...) ...))'.
 """.strip()
 
@@ -181,10 +179,8 @@ However, planning failed and returned the following feedback:
 
 We assume that planning failure occurs because the problem specification is incomplete. Could you generate the revised specification? 
 Let's think step by step. 
-1) Based on the feedback, identify if the error is a task planning failure or a motion planning failure.
-2) If the error is due to task planning failure, revise the specification to fix the issue based on the task planning feedback.
-3) If the error is due to motion planning failure, identify the action that failed and the cause of the failure and add or remove predicates to the specification to fix the issue.
-4) If the error is due to missing or non-existing objects, add or remove objects to the specification.
+1) Identify the cause of failure based on the failure feedback.
+2) Generate a revised specification based on the cause of failure.
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
@@ -221,7 +217,12 @@ Available actions are defined as:
 The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
 {convert_predicates(pddl_domain)}
 
-Output the plan of actions in JSON format without further explanation. The output must be a list of actions, and the action parameters are selected from the objects. Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
+Output the plan of actions in JSON format without further explanation. 
+Let's think step by step.
+1) First, write a short summary of this Cooking domain in words.
+2) Now, generate a plan of actions that accomplishes the task specified by the instruction.
+The output must be a list of actions, and the action parameters are selected from the objects. 
+Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
 """.strip()
 
 #The actions are represented in the form of 'action_name(parameter1, parameter2, ...)', and the parameters are selected from the objects (e.g., "pick(robot, tomato, tray)").
@@ -249,7 +250,8 @@ Output the plan of actions in JSON format without further explanation. The outpu
 def create_prompt_for_task_plan_revision(
     pddl_domain_str: str, # PDDL domain
     pddl_problem_obj_str: str, # PDDL objects
-    actions: List[str], # a sequence of symbolic actions
+    # actions: List[str], # a sequence of symbolic actions
+    actions: str, # a sequence of symbolic actions
     instruction: str, # a linguistic instruction
     bboxes: List[Tuple[str, List[float]]], # a liist of tuples of an object name and coordinates
     feedback: str, # motion planning feedback for errors
@@ -316,6 +318,9 @@ However, planning failed and returned the following feedback:
 {feedback}
 
 Based on the feedback, revise and generate a sequence of actions without further explanation.
+Let's think step by step.
+1) Identify the cause of failure based on the failure feedback.
+2) Now, generate a revised sequence of actions based on the feedback.
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
