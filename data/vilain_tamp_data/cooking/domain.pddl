@@ -20,6 +20,8 @@
         (HandEmpty ?robot) ; This predicate is used to declare that a robot's hand is empty and not grasping anything
         (Equipped ?robot ?tool) ; This predicated is used when a robot is equipped with a tool, such as a knife
 
+        (Registered ?robot ?obj); This predicate is used as an effect of the "scan" action and can only be True if the scan action is executed
+
         (CanNotReach ?robot ?obj ?loc) ; This predicate is used if the robot is unable to reach an object due to collisions or motion failures (e.g., a_bot cannot reach the ball at the plate)
 
         ; Goal related predicates
@@ -37,6 +39,22 @@
         (isNotFree ?loc) ; This predicate is used to declare that a location is not free and occupied by an object
     )
 
+    ; SCAN: Look for objects in the tray
+    (:action scan
+        :parameters (?robot ?obj ?loc)
+        :precondition (and
+            (Robot ?robot)
+            (PhysicalObject ?obj)
+            (Location ?loc)
+            (HandEmpty ?robot)
+            (At ?obj ?loc)
+            (not (Registered ?robot ?obj))
+        )
+        :effect (and
+            (Registered ?robot ?obj)
+        )
+    )
+
     ; PICK: Pick up an object
     (:action pick
         :parameters (?robot ?obj ?loc)
@@ -44,6 +62,7 @@
             (Robot ?robot)
             (PhysicalObject ?obj)
             (Location ?loc)
+            (Registered ?robot ?obj)
             (not (CanNotReach ?robot ?obj ?loc))
             (At ?obj ?loc)
             (HandEmpty ?robot)
@@ -73,6 +92,7 @@
             (At ?obj ?loc)
             (not (Grasping ?robot ?obj))
             (HandEmpty ?robot)
+            (not (Registered ?robot ?obj))
             (isNotFree ?loc)
         )
     )
