@@ -15,7 +15,7 @@
         (Tool knife)
 
         (HandEmpty a_bot)
-
+        (HandEmpty b_bot)
         (Location cutting_board)
         (Location tray)
         (Location plate)
@@ -30,12 +30,13 @@
         (At knife knife_holder)
         (At cucumber plate)
         (At apple plate2)
+        (isNotFree plate)
+        (isNotFree plate2)
     )
 
     (:goal
         (and
             (At cucumber plate2)
-            (At apple plate)
         )
     )
 )

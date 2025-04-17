@@ -8,13 +8,14 @@
     )
 
     (:init
-        (Robot a_bot)
+        (Robot a_bot)   
+        (Robot b_bot)
         (PhysicalObject carrot)
         (PhysicalObject cucumber)
         (Tool knife)
 
         (HandEmpty a_bot)
-
+        (HandEmpty b_bot)
         (Location cutting_board)
         (Location tray)
         (Location plate)
@@ -28,12 +29,13 @@
         (At knife knife_holder)
         (At carrot plate)
         (At cucumber plate2)
+        (isNotFree plate)
+        (isNotFree plate2)
     )
 
     (:goal
         (and
             (At carrot plate2)
-            (At cucumber plate)
         )
     )
 )
