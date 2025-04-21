@@ -320,6 +320,7 @@ class ViLaIn:
                     }]
 
                 output = self.generate(content)
+                print("output: \n", output)
                 # result = extract_pddl(output, "init")
                 pddl_output = extract_pddl(output, "init")
 
@@ -339,6 +340,7 @@ class ViLaIn:
                 count += 1
 
         return {
+            "model_output": output,
             "result": result,
             "prompt": prompt,
         }
@@ -406,6 +408,7 @@ class ViLaIn:
                 count += 1
 
         return {
+            "model_output": output,
             "result": result,
             "prompt": prompt,
         }
@@ -477,6 +480,7 @@ class ViLaIn:
                 count += 1
 
         return {
+            "model_output": output,
             "result": result,
             "prompt": prompt,
         }
@@ -531,6 +535,7 @@ class ViLaIn:
 
                 output = self.generate(content)
                 result = extract_json(output, "square")
+                print("result: \n", result)
 
                 success = True
             except Exception as e:
@@ -543,6 +548,7 @@ class ViLaIn:
                 count += 1
 
         return {
+            "model_output": output,
             "result": result,
             "prompt": prompt,
         }
@@ -609,10 +615,6 @@ class ViLaIn:
                 output = self.generate(content)
                 result = extract_json(output, "square")
 
-                # if the output is list of list
-                if type(result[0]) == list:
-                    result = [ r[0] for r in result ]
-
                 success = True
             except Exception as e:
                 result = f"The generation failed due to the following error:\n{e}"
@@ -624,6 +626,7 @@ class ViLaIn:
                 count += 1
 
         return {
+            "model_output": output,
             "result": result,
             "prompt": prompt,
         }
