@@ -57,10 +57,14 @@ The objects are:
 Bounding boxes are:
 {convert_bboxes(bboxes)}
 
+When generating the problem specification, you must follow the following assumptions:   
+1) For this task, you are only allowed to add and use one robot to the initial state. You can use either a_bot or b_bot, but not both.   
+2) We assume that a location is occupied and is not free if there is at least one object at the location.
+
 Could you write a set of predicates of the initial state for the given objects and locations? 
 Let's think step by step.
 1) First, write a short summary of this Cooking domain in words.
-2) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.   
+2) Write a short summary of the scene observation based on the image in words.
 3) Now, write the initial state for the given objects and locations.
 The set of predicates are enclosed by '(:init' and ')' so that '(:init (predicate1 ...) (predicate2 ...) ...)'.
 """.strip()
@@ -117,10 +121,14 @@ The initial state is:
 The linguistic instruction is: 
 {instruction}
 
+When generating the problem specification, you must follow the following assumptions:   
+1) For this task, you are only allowed to add and use one robot to the initial state. You can use either a_bot or b_bot, but not both.   
+2) We assume that a location is occupied and is not free if there is at least one object at the location.
+
 Could you write a set of predicates of the goal conditions for the given instruction and objects? 
 Let's think step by step.
-1) First, write a short summary of this Cooking domain in words.
-2) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.   
+1) First, write a short summary of this Cooking domain in words.   
+2) Write a short summary of the scene observation based on the image in words.
 3) Now, write the goal conditions for the given instruction and objects.
 The set of predicates are enclosed by '(:goal (and' and ')' so that '(:goal (and (predicate1 ...) (predicate2 ...) ...))'.
 """.strip()
@@ -179,11 +187,14 @@ And you revised and generated the following specification:
 However, planning failed and returned the following feedback:
 {feedback}
 
-We assume that planning failure occurs because the problem specification is incomplete. Could you generate the revised specification? 
+When generating the problem specification, you must follow the following assumptions:   
+1) For this task, you are only allowed to add and use one robot to the initial state. You can use either a_bot or b_bot, but not both.   
+2) We assume that a location is occupied and is not free if there is at least one object at the location.
+
 Let's think step by step. 
-1) Identify the cause of failure based on the failure feedback.
-2) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.   
-3) Generate a revised specification based on the cause of failure.
+1) Identify the cause of failure based on the failure feedback. Write your reasoning for the cause of failure in words.
+2) Generate a revised specification based on the cause of failure.
+
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"
@@ -203,7 +214,8 @@ def create_prompt_for_task_planning(
 
 #{action_explanations}
     prompt = f"""
-You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
+You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. 
+Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
 
 Now the instruction is: 
 {instruction}
@@ -217,14 +229,20 @@ The locations of the objects by bounding boxes are:
 Available actions are defined as:
 {convert_actions(pddl_domain)}
 
-The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
+The actions have preconditions and effects that must be satisfied before and after an action. These are represented by predicates that are defined as:
 {convert_predicates(pddl_domain)}
 
-Output the plan of actions in JSON format without further explanation. 
+
+When writing the plan of actions, you must follow the following assumptions:
+1) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.   
+2) We assume that a location is occupied and is not freeif there is at least one object at the location.
+
 Let's think step by step.
 1) First, write a short summary of this Cooking domain in words.
-2) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.   
-3) Now, generate a plan of actions that accomplishes the task specified by the instruction.
+2) Write a short summary of the scene observation based on the image and the objects in words.
+3) There is a strategy for solving the instruction in this domain. What is the strategy?
+4) Now, generate a plan of actions that accomplishes the task specified by the instruction.
+Output the plan of actions in JSON format without further explanation. 
 The output must be a list of actions, and the action parameters are selected from the objects. 
 Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
 """.strip()
@@ -270,7 +288,8 @@ def create_prompt_for_task_plan_revision(
 
 #{action_explanations}
     prompt_1 = f"""
-You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
+You are an agent that generates a plan of actions that accomplishes the task specified by a linguistic instruction. 
+Objects for the task are given as a combination of object name and type. Locations for the objects are represented by bounding boxes.
 
 Now the instruction is: 
 {instruction}
@@ -321,11 +340,16 @@ And you revised and generated the following actions:
 However, planning failed and returned the following feedback:
 {feedback}
 
-Based on the feedback, revise and generate a sequence of actions without further explanation.
+When writing the plan of actions, you must follow the following assumptions:
+1) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both. 
+2) We assume that a location is occupied and is not free if there is at least one object at the location.
+
 Let's think step by step.
-1) Identify the cause of failure based on the failure feedback.
-2) For this task, you are only allowed to use one robot. You can use either a_bot or b_bot, but not both.
-3) Now, generate a revised sequence of actions based on the feedback.
+1) Identify the cause of failure based on the failure feedback. Write your reasoning for the cause of failure.
+2) Now, generate a revised sequence of actions based on the feedback.
+Output the plan of actions in JSON format. Do not include comments on the actions.
+The output must be a list of actions, and the action parameters are selected from the objects. 
+Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
 """.strip()
 
     return f"{prompt_1}\n{prompt_2}\n{prompt_3}"

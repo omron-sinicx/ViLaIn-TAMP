@@ -200,7 +200,9 @@ Available actions are defined as:
 The actions have preconditions and effects that must be satisfied before and after an action. These are represneted by predicates that are defined as:
 {convert_predicates(pddl_domain)}
 
-Output the plan of actions in JSON format without further explanation. The output must be a list of actions, and the action parameters are selected from the objects. Each action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
+Output the plan of actions in JSON format without further explanation. 
+The output must be a list of actions, and the action parameters are selected from the objects. 
+ach action is a string and the parameters must not be enclosed by "" (e.g., ["action1(argument1, argument2, ...)", ...]).
 """.strip()
 
 #The actions are represented in the form of 'action_name(parameter1, parameter2, ...)', and the parameters are selected from the objects (e.g., "pick(robot, tomato, tray)").
