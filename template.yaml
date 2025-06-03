@@ -53,7 +53,7 @@ meta:
 header:
   bg_curve: sinic_curve.png
 
-teaser: teaser.png
+#teaser: teaser.png
 overview: |
   ViLaIn-TAMP is a hybrid planning framework that bridges the gap between vision-language models and classical symbolic planners. While recent advances in vision-language models (VLMs) have accelerated the development of language-guided robot planners, their black-box nature often lacks safety guarantees and interpretability crucial for real-world deployment. Conversely, classical symbolic planners offer rigorous safety verification but require significant expert knowledge for setup.
 
