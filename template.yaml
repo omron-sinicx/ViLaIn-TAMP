@@ -53,16 +53,37 @@ meta:
 header:
   bg_curve: sinic_curve.png
 
+<<<<<<< HEAD
 #teaser: teaser.png
+=======
+teaser: |
+  <video
+    src="Slicing-Problem1-Optimized-x3.mp4"
+    autoplay
+    loop
+    muted
+    playsinline
+    style="max-width: 100%; height: auto;"
+  />
+>>>>>>> c9042da (add video)
 overview: |
+  <video
+    src="Slicing-Problem1-Optimized-x3.mp4"
+    autoplay
+    loop
+    muted
+    playsinline
+    style="max-width: 100%; height: auto;"
+  />
+
   ViLaIn-TAMP is a hybrid planning framework that bridges the gap between vision-language models and classical symbolic planners. While recent advances in vision-language models (VLMs) have accelerated the development of language-guided robot planners, their black-box nature often lacks safety guarantees and interpretability crucial for real-world deployment. Conversely, classical symbolic planners offer rigorous safety verification but require significant expert knowledge for setup.
 
-  Our framework comprises three main components: (1) **ViLaIn** (Vision-Language Interpreter) - converts multimodal inputs into structured problem specifications using off-the-shelf VLMs without additional domain-specific training, (2) a modular **Task and Motion Planning (TAMP)** system that grounds these specifications in actionable trajectory sequences through symbolic and geometric constraint reasoning, and (3) a **corrective planning module** which receives concrete feedback on failed solution attempts and can feed adapted logic and geometric feasibility constraints back to ViLaIn to improve and further refine the specification.
+  Our framework comprises three main components: (1) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Vision-Language Interpreter (ViLaIn)</b> for translating multimodal inputs into PDDL problems, (2) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;"><i>sequence-before-satisfy</i></b> <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">TAMP module</b> for finding symbolically complete, collision-free action plans, and (3) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">corrective planning module</b> for refining outputs based on grounded failure feedback.
 
 body:
   - title: Framework Overview
     text: |
-      The ViLaIn-TAMP framework consists of three major components: (1) a Vision-Language Interpreter (ViLaIn) for translating multimodal inputs into PDDL problems, (2) a sequence-before-safety TAMP module for finding symbolically complete, collision-free action plans, and (3) a corrective planning module for refining outputs based on grounded failure feedback.
+      The ViLaIn-TAMP framework consists of three major components: (1) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Vision-Language Interpreter (ViLaIn)</b> for translating multimodal inputs into PDDL problems, (2) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;"><i>sequence-before-satisfy</i></b> <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">TAMP module</b> for finding symbolically complete, collision-free action plans, and (3) a <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">corrective planning module</b> for refining outputs based on grounded failure feedback.
 
       <img src="teaser.png" alt="ViLaIn-TAMP Framework" class="uk-align-center uk-responsive-width" />
       <span class="uk-text-meta">ViLaIn-TAMP Framework Architecture</span>
@@ -71,22 +92,22 @@ body:
     text: |
       We evaluate ViLaIn-TAMP on five manipulation tasks in a cooking domain:
 
-      - **Pick and Place**: moves a target object to a desired location.
-      - **Pick Obstacles Dual Arm**: moves a target object to a desired location while removing another object which occupies the target location with dual arms.
-      - **Pick Obstacles Single Arm**: the same task as Pick Obstacles Dual Arm but with a single arm.
-      - **Slice Food**: slices a food (e.g., vegetable or fruit) using a tool (e.g., knife).
-      - **Slice and Serve**: slices a food using a tool and serves the slices in a desired location (e.g., bowl or plate).
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Pick and Place</b>: moves a target object to a desired location.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Pick Obstacles Dual Arm</b>: moves a target object to a desired location while removing another object which occupies the target location with dual arms.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Pick Obstacles Single Arm</b>: the same task as <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Pick Obstacles Dual Arm</b> but with a single arm.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Slice Food</b>: slices a food (e.g., vegetable or fruit) using a tool (e.g., knife).
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Slice and Serve</b>: slices a food using a tool and serves the slices in a desired location (e.g., bowl or plate).
 
   - title: Experimental Results
     text: |
       We consider four model configurations to evaluate ViLaIn-TAMP:
 
-      - **ViLaIn-TAMP-CP**: A ViLaIn-TAMP *with* corrective planning (CP).
-      - **ViLaIn-TAMP-No-CP**: ViLaIn-TAMP *without* CP.
-      - **Baseline-CP**: An approach that uses VLMs to directly generate actions plans *with* CP.
-      - **Baseline-No-CP**: The baseline approach *without* CP.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">ViLaIn-TAMP-CP</b>: A ViLaIn-TAMP *with* corrective planning (CP).
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">ViLaIn-TAMP-No-CP</b>: ViLaIn-TAMP *without* CP.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Baseline-CP</b>: An approach that uses VLMs to directly generate actions plans *with* CP.
+      - <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Baseline-No-CP</b>: The baseline approach *without* CP.
 
-      The results show that (1) ViLaIn-TAMP outperforms the baseline approach by a large margin, and (2) CP constantly improves success rates. The proposed closed-loop corrective architecture exhibits a more than **30% higher mean success rate** for ViLaIn-TAMP compared to without corrective planning.
+      The results show that (1) ViLaIn-TAMP outperforms the baseline approach by a large margin, and (2) CP constantly improves success rates. The proposed closed-loop corrective architecture exhibits a more than <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">30% higher mean success rate</b> for ViLaIn-TAMP compared to without corrective planning.
 
       <img src="main_results.png" alt="Experimental Results" class="uk-align-center uk-responsive-width" />
       <span class="uk-text-meta">Main experimental results showing success rates across different tasks and configurations</span>
@@ -95,14 +116,14 @@ body:
     text: |
       Our work makes several key contributions to the field of robot planning:
 
-      1. **Hybrid Planning Framework**: We bridge the gap between VLMs and classical symbolic planners, combining the strengths of both approaches.
+      1. <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Hybrid Planning Framework</b>: We bridge the gap between VLMs and classical symbolic planners, combining the strengths of both approaches.
 
-      2. **Interpretable and Verifiable**: Unlike black-box VLM planners, our approach provides interpretable problem specifications and safety guarantees through symbolic reasoning.
+      2. <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Interpretable and Verifiable</b>: Unlike black-box VLM planners, our approach provides interpretable problem specifications and safety guarantees through symbolic reasoning.
 
-      3. **Corrective Planning**: Our framework includes a corrective planning module that learns from failures and improves performance through iterative refinement.
+      3. <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Corrective Planning</b>: Our framework includes a corrective planning module that learns from failures and improves performance through iterative refinement.
 
-      4. **Domain-Agnostic**: The ViLaIn component works with off-the-shelf VLMs without requiring additional domain-specific training.
+      4. <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Domain-Agnostic</b>: The ViLaIn component works with off-the-shelf VLMs without requiring additional domain-specific training.
 
-      5. **Comprehensive Evaluation**: We demonstrate the effectiveness of our approach across multiple manipulation tasks in a cooking domain.
+      5. <b style="font-weight: 900; text-shadow: 0.5px 0 0 currentColor;">Comprehensive Evaluation</b>: We demonstrate the effectiveness of our approach across multiple manipulation tasks in a cooking domain.
 
 # projects: []
