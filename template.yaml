@@ -12,7 +12,7 @@ resources:
 #   demo:
 #   huggingface:
 description: While recent advances in vision-language models (VLMs) have accelerated the development of language-guided robot planners, their black-box nature often lacks safety guarantees and interpretability crucial for real-world deployment. This paper proposes ViLaIn-TAMP, a hybrid planning framework for enabling verifiable, interpretable, and autonomous robot behaviors.
-image: https://omron-sinicx.github.io/${your-repository-name}/teaser.png
+#image: https://omron-sinicx.github.io/${your-repository-name}/teaser.png
 url: https://omron-sinicx.github.io/${your-repository-name}
 speakerdeck:
 authors:
