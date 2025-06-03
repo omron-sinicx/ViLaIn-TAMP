@@ -53,19 +53,16 @@ meta:
 header:
   bg_curve: sinic_curve.png
 
-<<<<<<< HEAD
-#teaser: teaser.png
-=======
-teaser: |
-  <video
-    src="Slicing-Problem1-Optimized-x3.mp4"
-    autoplay
-    loop
-    muted
-    playsinline
-    style="max-width: 100%; height: auto;"
-  />
->>>>>>> c9042da (add video)
+# teaser: |
+#   <video
+#     src="Slicing-Problem1-Optimized-x3.mp4"
+#     autoplay
+#     loop
+#     muted
+#     playsinline
+#     style="max-width: 100%; height: auto;"
+#   />
+# teaser: teaser.png
 overview: |
   <video
     src="Slicing-Problem1-Optimized-x3.mp4"
