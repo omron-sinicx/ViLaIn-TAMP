@@ -4,13 +4,13 @@ twitter: '@omron_sinicx'
 title: 'Grounded Vision-Language Interpreter for Integrated Task and Motion Planning'
 conference: In Review
 resources:
-  paper:
-  poster:
-  code:
   video:
-  blog:
-  demo:
-  huggingface:
+#   paper:
+#   poster:
+#   code:
+#   blog:
+#   demo:
+#   huggingface:
 description: While recent advances in vision-language models (VLMs) have accelerated the development of language-guided robot planners, their black-box nature often lacks safety guarantees and interpretability crucial for real-world deployment. This paper proposes ViLaIn-TAMP, a hybrid planning framework for enabling verifiable, interpretable, and autonomous robot behaviors.
 image: https://omron-sinicx.github.io/${your-repository-name}/teaser.png
 url: https://omron-sinicx.github.io/${your-repository-name}
@@ -47,8 +47,8 @@ affiliations:
   - University of Hamburg
 meta:
   - '* Equal contribution'
-bibtex: >
-  TBW
+# bibtex: >
+#   TBW
 
 header:
   bg_curve: sinic_curve.png
