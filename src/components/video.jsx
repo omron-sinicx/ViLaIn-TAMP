@@ -9,15 +9,13 @@ export default class Video extends React.Component {
   render() {
     if (!this.props.video) return null;
 
-    // Add comprehensive autoplay parameters for different platforms
     let videoUrl = this.props.video;
-    const separator = videoUrl.includes('?') ? '&' : '?';
-    videoUrl += `${separator}autoplay=1&muted=1&loop=1`;
 
-    // Add YouTube specific parameters if it's a YouTube video
-    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-      videoUrl += '&controls=1&showinfo=0&rel=0';
-    }
+    // Check if it's a YouTube/external video (needs iframe) or local video (needs video element)
+    const isExternalVideo =
+      videoUrl.includes('youtube.com') ||
+      videoUrl.includes('youtu.be') ||
+      videoUrl.includes('vimeo.com');
 
     const wrapperClass = {
       position: 'relative',
@@ -35,20 +33,50 @@ export default class Video extends React.Component {
       height: '100%',
       border: 'none',
     };
-    return (
-      <div className="uk-section">
-        <h2 className="uk-heading-line uk-text-center" id="video"></h2>
-        <div style={wrapperClass}>
-          <iframe
-            style={innerClass}
-            className="uk-align-center"
-            src={videoUrl}
-            frameBorder="0"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
+
+    if (isExternalVideo) {
+      // Handle external videos (YouTube, Vimeo, etc.) with iframe
+      const separator = videoUrl.includes('?') ? '&' : '?';
+      videoUrl += `${separator}autoplay=1&muted=1&loop=1`;
+
+      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        videoUrl += '&controls=1&showinfo=0&rel=0';
+      }
+
+      return (
+        <div className="uk-section">
+          <h2 className="uk-heading-line uk-text-center" id="video"></h2>
+          <div style={wrapperClass}>
+            <iframe
+              style={innerClass}
+              className="uk-align-center"
+              src={videoUrl}
+              frameBorder="0"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // Handle local videos with HTML5 video element
+      return (
+        <div className="uk-section">
+          <h2 className="uk-heading-line uk-text-center" id="video"></h2>
+          <div style={wrapperClass}>
+            <video
+              style={innerClass}
+              className="uk-align-center"
+              src={videoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+            />
+          </div>
+        </div>
+      );
+    }
   }
 }
