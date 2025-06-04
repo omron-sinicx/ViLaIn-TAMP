@@ -10,8 +10,8 @@ export default class Authors extends React.Component {
     // Set column width based on number of authors, max 3 per row
     const columnWidth =
       this.props.authors.length <= 3 ? this.props.authors.length : 3;
-    const authorClass = `uk-width-1-${columnWidth}`;
-    const affiliationClass = `uk-width-1-${this.props.affiliations.length} uk-margin-small-top`;
+    const authorClass = `uk-width-1-${columnWidth} uk-margin-small-top`;
+    const affiliationClass = `uk-width-1-${this.props.affiliations.length} uk-margin-top`;
     return (
       <div>
         <div
@@ -37,11 +37,13 @@ export default class Authors extends React.Component {
             return (
               <span className={affiliationClass} key={'affiliation-' + idx}>
                 <sup>{idx + 1}</sup>
-                {affiliation}
+                <span style={{ fontWeight: 500 }}>{affiliation}</span>
               </span>
             );
           })}
-          <span className="uk-width-1-1">{this.props.meta}</span>
+          <span className="uk-width-1-1 uk-margin-small-top">
+            {this.props.meta}
+          </span>
         </div>
       </div>
     );
