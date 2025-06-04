@@ -22,7 +22,7 @@ export default class Video extends React.Component {
     const wrapperClass = {
       position: 'relative',
       width: '100%',
-      paddingBottom: '76.7%', // 1080/1408 = 0.767 for 1408x1080 aspect ratio
+      paddingBottom: '45.05%', // 1/2.22 = 0.4505 for 2.22:1 aspect ratio
       height: 0,
       overflow: 'hidden',
       backgroundColor: 'transparent',
