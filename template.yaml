@@ -47,8 +47,18 @@ affiliations:
   - University of Hamburg
 meta:
   - '* Equal contribution'
-# bibtex: >
-#   TBW
+bibtex: >
+  # Arxiv version
+
+  @misc{siburian2025vilaintamp,
+      title={Grounded Vision-Language Interpreter for Integrated Task and Motion Planning}, 
+      author={Jeremy Siburian and Keisuke Shirai and Cristian C. Beltran-Hernandez and Masashi Hamaya and Michael Görner and Atsushi Hashimoto},
+      year={2025},
+      eprint={2506.03270},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2506.03270}, 
+  }
 
 header:
   bg_curve: sinic_curve.png
