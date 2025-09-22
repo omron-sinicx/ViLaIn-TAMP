@@ -39,7 +39,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
     "prettier": "^3.2.1",
-    "vite-prerender-plugin": "^0.5.12",
     "sass": "^1.69.7",
     "typos-rs-npm": "github:dalisoft/typos-rs-npm",
     "vite": "^6.0.11"
