@@ -16,7 +16,28 @@ import data from '../../template.yaml';
 import '@/js/styles.js';
 
 class Template extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoaded: false,
+    };
+  }
+
+  componentDidMount() {
+    // Wait for styles to load, then hide loading screen and show content
+    setTimeout(() => {
+      document.body.classList.add('react-loaded');
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+      this.setState({ isLoaded: true });
+    }, 100);
+  }
+
   render() {
+    // HTML loading screen handles everything, just render React content when ready
+    if (!this.state.isLoaded) {
+      return null; // Don't render anything until ready
+    }
+
     return (
       <div>
         <Helmet
