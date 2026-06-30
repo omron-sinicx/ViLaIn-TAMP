@@ -24,12 +24,20 @@ class Template extends React.Component {
   }
 
   componentDidMount() {
-    // Wait for styles to load, then hide loading screen and show content
-    setTimeout(() => {
+    const reveal = () => {
       document.body.classList.add('react-loaded');
-      document.body.style.overflow = 'auto'; // Re-enable scrolling
+      document.body.style.overflow = 'auto';
       this.setState({ isLoaded: true });
-    }, 100);
+    };
+
+    const whenPageLoaded =
+      document.readyState === 'complete'
+        ? Promise.resolve()
+        : new Promise((resolve) =>
+            window.addEventListener('load', resolve, { once: true })
+          );
+
+    Promise.all([whenPageLoaded, document.fonts?.ready]).then(reveal);
   }
 
   render() {
