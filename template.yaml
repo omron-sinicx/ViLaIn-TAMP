@@ -2,7 +2,7 @@ theme: default # default || dark
 organization: OMRON SINIC X
 twitter: '@omron_sinicx'
 title: 'Grounded Vision-Language Interpreter for Integrated Task and Motion Planning'
-conference: In Review
+conference: IROS 2026
 resources:
   video: Problem5-X6-Optimized-720p.mp4
   paper: https://www.arxiv.org/abs/2506.03270
@@ -21,7 +21,7 @@ authors:
     url: https://jsiburian.github.io/
     position: equal contribution
   - name: Keisuke Shirai*
-    affiliation: [2]
+    affiliation: [2, 3]
     url: https://kskshr.github.io
     position: equal contribution
   - name: Cristian C. Beltran-Hernandez*
@@ -33,18 +33,19 @@ authors:
     position: Senior Researcher
     url: https://sites.google.com/view/masashihamaya/home
   - name: Michael Görner
-    affiliation: [3]
+    affiliation: [4]
     position: Professor
     url: https://tams.informatik.uni-hamburg.de/people/goerner/
   - name: Atsushi Hashimoto
     affiliation: [2]
     position: Senior Researcher
     url: https://atsushihashimoto.github.io/cv
-contact_ids: ['github', 'omron', 3] #=> github issues, contact@sinicx.com, 2nd author
+contact_ids: ['github', 'omron', 1, 2, 3] #=> github issues, contact@sinicx.com, 2nd author
 affiliations:
   - The University of Tokyo
   - OMRON SINIC X Corporation
-  - University of Hamburg
+  - AIST
+  - Constructor University
 meta:
   - '* Equal contribution'
 bibtex: >

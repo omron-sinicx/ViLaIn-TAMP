@@ -30,11 +30,6 @@ class ContactCard extends React.Component {
             <li className="uk-visible@m">
               <a href="#">{this.props.author.position}</a>
             </li>
-            <li>
-              <a href="https://www.omron.com/sinicx/" target="_blank">
-                OMRON SINIC X
-              </a>
-            </li>
           </ul>
         </div>
       </div>
