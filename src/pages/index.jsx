@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from 'react-dom';
+import { renderToString } from 'react-dom/server';
 import { Helmet } from 'react-helmet';
 
 import Header from '@/components/header.jsx';
@@ -88,4 +89,12 @@ class Template extends React.Component {
   }
 }
 
-render(<Template />, document.getElementById('root'));
+if (typeof document !== 'undefined') {
+  render(<Template />, document.getElementById('root'));
+}
+
+// Export prerender function for vite-prerender-plugin
+export function prerender() {
+  const html = renderToString(<Template />);
+  return { html };
+}

@@ -7,11 +7,13 @@ export default class Authors extends React.Component {
   }
 
   render() {
-    // Set column width based on number of authors, max 3 per row
-    const columnWidth =
-      this.props.authors.length <= 3 ? this.props.authors.length : 3;
-    const authorClass = `uk-width-1-${columnWidth} uk-margin-small-top`;
-    const affiliationClass = `uk-width-1-${this.props.affiliations.length} uk-margin-top`;
+    if (!this.props.authors || !this.props.affiliations) {
+      return null;
+    }
+    const columnMaxLen =
+      this.props.authors.length > 4 ? 3 : this.props.authors.length;
+    const authorClass = `uk-width-1-${columnMaxLen} uk-width-1-${this.props.authors.length}@m`;
+    const affiliationClass = `uk-width-1-${this.props.affiliations.length} uk-margin-small-top`;
     return (
       <div>
         <div

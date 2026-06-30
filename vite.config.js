@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import yaml from '@rollup/plugin-yaml';
+import { vitePrerenderPlugin } from 'vite-prerender-plugin';
 import path from 'path';
 
 // https://vite.dev/config/
@@ -11,7 +12,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  plugins: [react(), yaml()],
+  plugins: [
+    react(), 
+    yaml(),
+    vitePrerenderPlugin({
+      renderTarget: '#root',
+      routesToPrerender: ['/']
+    })
+  ],
   build: {
     outDir: 'build',
     rollupOptions: {

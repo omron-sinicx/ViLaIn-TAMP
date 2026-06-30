@@ -6,7 +6,6 @@
     "dev": "vite",
     "clean": "rm -rf build/",
     "build": "vite build",
-    "postbuild": "react-snap",
     "preview": "vite preview",
     "format": "prettier src/ --check",
     "format:fix": "prettier -w src/ --check",
@@ -17,14 +16,6 @@
   },
   "author": "Mai Nishimura <mai.nishimura@sinicx.com>",
   "license": "MIT License",
-  "reactSnap": {
-    "puppeteerArgs": [
-      "--disable-setuid-sandbox",
-      "--no-sandbox"
-    ],
-    "concurrency": 1,
-    "inlineCss": false
-  },
   "volta": {
     "node": "22.13.1"
   },
@@ -48,7 +39,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
     "prettier": "^3.2.1",
-    "react-snap": "^1.23.0",
+    "vite-prerender-plugin": "^0.5.12",
     "sass": "^1.69.7",
     "typos-rs-npm": "github:dalisoft/typos-rs-npm",
     "vite": "^6.0.11"

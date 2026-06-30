@@ -19,7 +19,7 @@ class ResourceBtn extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isMobile: window.innerWidth < 600,
+      isMobile: typeof window !== 'undefined' ? window.innerWidth < 600 : false,
     };
     this.icons = {
       paper: FaFilePdf,
@@ -34,14 +34,20 @@ class ResourceBtn extends React.Component {
     this.handleResize = this.handleResize.bind(this);
   }
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-    this.handleResize();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.handleResize);
+      this.handleResize();
+    }
   }
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.handleResize);
+    }
   }
   handleResize() {
-    this.setState({ isMobile: window.innerWidth < 600 });
+    if (typeof window !== 'undefined') {
+      this.setState({ isMobile: window.innerWidth < 600 });
+    }
   }
   render() {
     if (!this.props.url) return null;
@@ -69,19 +75,26 @@ export default class Header extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isMobile: window.innerWidth < 1000,
+      isMobile:
+        typeof window !== 'undefined' ? window.innerWidth < 1000 : false,
     };
     this.handleResize = this.handleResize.bind(this);
   }
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-    this.handleResize();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.handleResize);
+      this.handleResize();
+    }
   }
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.handleResize);
+    }
   }
   handleResize() {
-    this.setState({ isMobile: window.innerWidth < 960 });
+    if (typeof window !== 'undefined') {
+      this.setState({ isMobile: window.innerWidth < 960 });
+    }
   }
 
   render() {
